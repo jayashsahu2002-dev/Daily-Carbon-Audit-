@@ -33,14 +33,37 @@ Upload your audit photos here. See `../audit-inputs/PHOTO_CHECKLIST.md` for the 
 11)https://www.cityu.edu.hk/sro/FacilitiesProvision/MOS/mfloorplan_h13.jpg
 12)<img width="2560" height="1920" alt="photo_17_2026-10-11_15-57-03" src="https://github.com/user-attachments/assets/74b5ff23-cb8a-480d-9b7b-603ccffdf34b" />
 
+---
 
+## Photo index (files used in the audit report)
 
+The photos above were saved in this folder under the names below. The report and the workbook's Photo_Log sheet refer to them by these reference codes.
 
-
-
-
-
-
-
-
-
+| Ref | File | What it shows | Data taken from it |
+|---|---|---|---|
+| 01 | `01_room_overview.jpg` | Room 1003B: twin beds, desks, ceiling LED battens, window AC above NW window | Room layout; equipment present |
+| 02a | `02a_window_view.jpg` | Window and outlook over Tolo Harbour / Ma On Shan | Single glazing, dark aluminium frame, fly screen |
+| 02b | `02b_window_fixed_pane_measured.jpg` | Bottom fixed pane measured 1.10 m x 0.17-0.19 m | Glazing area 0.209 m² |
+| 02c | `02c_window_casement_measured.jpg` | Casement measured 0.53 m x 1.26 m = 0.67 m² | Two casements 1.34 m² |
+| 02d | `02d_compass_328NW.jpg` | Compass 328° NW, 22°26'0"N 114°14'32"E, Ma On Shan, 44 m | Orientation and location |
+| 02e | `02e_curtain_closed.jpg` | Full-height grey curtain closed; AC at upper left | Internal shading |
+| 03a | `03a_ac_specification.jpg` | Midea MW-12CRF8E specification / energy label data | 3.34 kW, 1,192 W, R32, Grade 1, 362 kWh, CSPF 4.66 |
+| 03b | `03b_ac_front_louvres.jpg` | AC front: dark deposits on discharge louvres; Eco, Timer, Dry modes | Maintenance finding; controls available |
+| 05a | `05a_ceiling_led_battens.jpg` | Two linear LED ceiling battens | Lighting inventory |
+| 05b | `05b_desk_led_and_fan.jpg` | Under-shelf LED desk light and desk fan | Task lighting |
+| 06a | `06a_laptop_adapter_65W.jpg` | HP 65 W adapter TPN-CA17, Efficiency Level VI | Laptop power |
+| 06b | `06b_desk_fan_label_20W.jpg` | Fan label: ZW02-180, 180 mm, 20 W, 220 V | Fan power |
+| 08a | `08a_water_heater_DHB-E.jpg` | Stiebel Eltron DHB-E electronic instantaneous heater, 30-60 °C dial | Hot-water system type |
+| 08b | `08b_washroom_downlights.jpg` | Two LED downlights, exposed services, sensor | Washroom lighting |
+| 08c | `08c_washroom_light_and_fan.jpg` | Downlight and window exhaust fan | Washroom lighting / ventilation |
+| 08d | `08d_washroom_exhaust_fan.jpg` | J.E.E. window exhaust fan (runs 24 h) | Ventilation finding |
+| 08e | `08e_water_heater_spec.jpg` | Heater specification: 380 V, max 60 °C | Electrical supply |
+| 09a | `09a_dispenser_spec.jpg` | Aquatek AQ-1323T: 750 W heater, 160 W compressor, 10 L hot / 7.9 L cold / 3 L ice | Dispenser ratings |
+| 09b | `09b_water_dispenser.jpg` | Dispenser in kitchen, hot water at 98 °C; SRO cleaning notice | Standing losses |
+| 09c | `09c_induction_cooker_spec.jpg` | Philips HD4911: 2,100 W, EEL Grade 2 | Cooking power |
+| 09d | `09d_induction_cooker_product.jpg` | Philips 5000 Series HD4911/80 (retailer image) | Model identification |
+| 09e | `09e_induction_energy_label.jpg` | Energy label Grade 2, thermal efficiency 88.1% (I220011/22) | Cooking efficiency |
+| 09f | `09f_kitchen_split_ac.jpg` | Toshiba split AC in kitchen (also used as photo 12 - left on 8 h+) | Kitchen AC |
+| 09g | `09g_kitchen_ac_energy_label.jpg` | Label: 688 kWh/yr @1,200 h, 7.00 kW, R410A, Grade 1 | Kitchen AC energy |
+| 09h | `09h_microwave.jpg` | Toshiba MW2-MM24PC 24 L, 800 W output | Kitchen inventory |
+| 09i | `09i_fridge_energy_label.jpg` | Panasonic NR-BV361B: Grade 1, 263 kWh/yr, 233 + 99 L | Refrigeration energy |
