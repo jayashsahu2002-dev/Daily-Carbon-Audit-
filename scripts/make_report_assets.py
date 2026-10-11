@@ -146,10 +146,11 @@ D["inventory"] = inv
 monthly = []
 for i in range(12):
     r = 6 + i
-    row = {c: v("Monthly", f"{c}{r}") for c in "ABCDEFGHIJKLMNOPQRST"}
+    row = {c: v("Monthly", f"{c}{r}") for c in "ABCDEFGHIJKLMNOPQRSTU"}
     monthly.append(row)
 D["monthly"] = monthly
-D["monthly_total"] = {c: v("Monthly", f"{c}18") for c in "BDEFGHIJKLMNOPQRST"}
+D["monthly_total"] = {c: v("Monthly", f"{c}18") for c in "BDEFGHIJKLMNOPQRSTU"}
+D["hist"] = {c: v("Monthly", f"{c}23") for c in "BDEFGHIJKLMNOPQRSTU"}  # Jan-Sep 2026 since move-in
 D["ac_months"] = [dict(m=v("AC_Baseline", f"A{6 + i}"), season=v("AC_Baseline", f"C{6 + i}"),
                        spend=v("AC_Baseline", f"D{6 + i}"), td=v("AC_Baseline", f"E{6 + i}"),
                        hours=v("AC_Baseline", f"F{6 + i}"), bu=v("AC_Baseline", f"G{6 + i}")) for i in range(12)]
@@ -185,15 +186,34 @@ D["flights"] = [dict(leg=v("Lifestyle_Scope3", f"A{r}"), gcd=v("Lifestyle_Scope3
 D["personal"] = [dict(name=v("Lifestyle_Scope3", f"A{r}"), kg=v("Lifestyle_Scope3", f"B{r}"), pct=v("Lifestyle_Scope3", f"C{r}"))
                  for r in range(22, 27)]
 emos = []
-for r in range(6, 24):
+emo_ws = wb["EMO_Register"]
+emo_rows = [r for r in range(6, emo_ws.max_row + 1) if str(v("EMO_Register", f"A{r}") or "").startswith("EMO-")]
+for r in emo_rows:
     emos.append({key: v("EMO_Register", f"{col}{r}") for key, col in zip(
         ["ref", "cat", "type", "resp", "desc", "basis", "fac_kwh", "hh_kwh", "hh_hkd", "cost", "payback", "life",
-         "fac_kg", "hh_kg", "rec"], "ABCDEFGHIJKLMNO")})
+         "fac_kg", "hh_kg", "rec", "base", "pct_saved", "fac_hkd", "npv", "sir", "cse", "life_t", "cost_per_t"],
+        "ABCDEFGHIJKLMNOPQRSTUVW")})
 D["emos"] = emos
+cat_row = next(r for r in range(6, emo_ws.max_row + 1) if v("EMO_Register", f"A{r}") == "Category I")
 D["emo_summary"] = [dict(cat=v("EMO_Register", f"A{r}"), n=v("EMO_Register", f"B{r}"), hh_kwh=v("EMO_Register", f"C{r}"),
                          pct=v("EMO_Register", f"D{r}"), kg=v("EMO_Register", f"E{r}"), fac_kwh=v("EMO_Register", f"F{r}"))
-                    for r in range(27, 31)]
-D["emo_types"] = [dict(type=v("EMO_Register", f"A{r}"), n=v("EMO_Register", f"B{r}")) for r in range(34, 39)]
+                    for r in range(cat_row, cat_row + 4)]
+type_row = next(r for r in range(6, emo_ws.max_row + 1) if v("EMO_Register", f"A{r}") == "Lighting (LG)")
+D["emo_types"] = [dict(type=v("EMO_Register", f"A{r}"), n=v("EMO_Register", f"B{r}")) for r in range(type_row, type_row + 5)]
+dsv = lambda ref: v("District_Scaling", ref)  # noqa: E731
+D["district"] = dict(
+    e_pc=dsv("B6"), e_m2=dsv("B7"), room_eui=dsv("B8"), s_audit=dsv("B9"), area_kwh=dsv("B10"), a=dsv("B11"),
+    person_kwh=dsv("B12"), b=dsv("B13"), area_share=dsv("B14"),
+    pop=dsv("B18"), hh=dsv("B19"), ahs=dsv("B20"), floor_pp=dsv("B21"), area1=dsv("B22"), area1_hh=dsv("B23"),
+    prh_hh=dsv("B24"), prh_area=dsv("B25"), other_hh=dsv("B26"), ssf_share=dsv("B27"), ssf_area=dsv("B28"),
+    priv_area=dsv("B29"), area2=dsv("B30"), area_diff=dsv("B31"), s_district=dsv("B32"),
+    methods=[dict(name=dsv(f"A{r}"), factor=dsv(f"B{r}"), unit=dsv(f"C{r}"), qty=dsv(f"D{r}"), qunit=dsv(f"E{r}"),
+                  gwh=dsv(f"F{r}"), vs_bench=dsv(f"G{r}")) for r in range(36, 45)],
+    ratio_m2_pc=dsv("B46"), ratio_area=dsv("F46"), ratio_comp_pc=dsv("B47"),
+    types=[dict(name=dsv(f"A{r}"), s=dsv(f"B{r}"), n=dsv(f"C{r}"), area=dsv(f"D{r}"), e=dsv(f"E{r}"), pp=dsv(f"F{r}"),
+                pm2=dsv(f"G{r}")) for r in range(53, 57)],
+    hk_per_hh=dsv("E59"), comp_vs_hk_hh=dsv("E60"),
+)
 D["sensitivity"] = [dict(i=v("Sensitivity", f"A{r}"), name=v("Sensitivity", f"B{r}"), val=v("Sensitivity", f"C{r}"),
                          ac=v("Sensitivity", f"D{r}"), hh=v("Sensitivity", f"E{r}"), kg=v("Sensitivity", f"F{r}"),
                          chg=v("Sensitivity", f"G{r}")) for r in range(6, 20)]
@@ -201,9 +221,10 @@ D["inputs"] = [dict(name=r[0], section=r[1], label=r[2], value=r[3], unit=r[4], 
                for r in INPUTS]
 D["quality_counts"] = dict(Counter(r[5] for r in INPUTS))
 D["sources"] = [dict(id=s[0], short=s[1], cit=s[2], url=s[3]) for s in SOURCES]
-D["entry_guide"] = [dict(sheet=v("EE-EAes_Entry_Guide", f"A{r}"), cell=v("EE-EAes_Entry_Guide", f"B{r}"),
-                         field=v("EE-EAes_Entry_Guide", f"C{r}"), value=v("EE-EAes_Entry_Guide", f"D{r}"))
-                    for r in range(5, wb["EE-EAes_Entry_Guide"].max_row + 1) if v("EE-EAes_Entry_Guide", f"A{r}")]
+FE = "EE-EAes_Form_Entries"
+D["form_entries"] = [dict(sheet=v(FE, f"A{r}"), cell=v(FE, f"B{r}"), field=v(FE, f"C{r}"), value=v(FE, f"D{r}"),
+                          kind=v(FE, f"E{r}"), note=v(FE, f"F{r}"))
+                     for r in range(5, wb[FE].max_row + 1) if v(FE, f"A{r}")]
 D["photo_log"] = [dict(ref=v("Photo_Log", f"A{r}"), file=v("Photo_Log", f"B{r}"), what=v("Photo_Log", f"C{r}"),
                        data=v("Photo_Log", f"D{r}")) for r in range(5, wb["Photo_Log"].max_row + 1) if v("Photo_Log", f"A{r}")]
 D["flights_in"] = FLIGHTS
@@ -272,7 +293,7 @@ style(ax)
 for i in (0, 6):
     ax.text(i, hw[i] + 1, f"{hw[i]:.0f}", ha="center", va="bottom", fontsize=8, color=INK)
 ax.set_ylim(0, max(hw) * 1.18)
-ax.text(11.4, max(hw) * 1.12, "Second line = cold-water inlet (HKO monthly mean)", ha="right", fontsize=7.6, color=INK2)
+ax.text(11.4, max(hw) * 1.12, "Lower axis line: cold-water inlet temperature (HKO monthly mean)", ha="right", fontsize=7.6, color=INK2)
 figs["hw"] = save(fig, "fig03_hotwater_monthly.png")
 
 # Fig: end-use horizontal bars
@@ -418,6 +439,74 @@ ax.set_xlabel("Ratio to Hong Kong benchmark")
 style(ax, "x")
 ax.set_xlim(0, max(b[1] for b in bms) * 1.25)
 figs["bench"] = save(fig, "fig12_benchmarks.png")
+
+# Fig: district scale-up by method, against the two top-down benchmarks
+ds = D["district"]
+labels_ds = ["Per household", "Per capita", "Composite (gas-adjusted)", "Composite (method-2 area)", "Composite (a·A + b·N)",
+             "Per m² (method-2 area)", "Per m² (method-1 area)"]
+vals_ds = [ds["methods"][3]["gwh"], ds["methods"][0]["gwh"], ds["methods"][6]["gwh"], ds["methods"][5]["gwh"],
+           ds["methods"][4]["gwh"], ds["methods"][2]["gwh"], ds["methods"][1]["gwh"]]
+cols_ds = [SER[3], SER[0], SER[2], SER[2], SER[2], SER[1], SER[1]]
+fig, ax = plt.subplots(figsize=(7.2, 3.3))
+ax.barh(labels_ds, vals_ds, 0.55, color=cols_ds)
+bA, bB = ds["methods"][7]["gwh"], ds["methods"][8]["gwh"]
+ax.axvspan(min(bA, bB), max(bA, bB), color=GRID, alpha=0.55, zorder=0)
+ax.axvline(bA, color=INK2, lw=0.9, ls="--")
+ax.axvline(bB, color=INK2, lw=0.9, ls=":")
+ax.text(bA, len(vals_ds) - 0.45, f" EMSD-based {bA:,.0f}", fontsize=7.4, color=INK2, va="bottom")
+ax.text(bB, len(vals_ds) - 0.45, f"CLP-based {bB:,.0f} ", fontsize=7.4, color=INK2, va="bottom", ha="right")
+for i, val in enumerate(vals_ds):
+    ax.text(val + 15, i, f"{val:,.0f}", va="center", fontsize=7.8, color=INK)
+ax.set_xlabel("Sha Tin residential electricity, GWh per year")
+style(ax, "x")
+ax.set_xlim(0, max(vals_ds) * 1.12)
+ax.set_ylim(-0.6, len(vals_ds) - 0.1)
+figs["district"] = save(fig, "fig13_district_methods.png")
+
+# Fig: the composite factor - electricity per person vs floor area per person
+import numpy as np  # noqa: E402
+sgrid = np.linspace(5, 22, 50)
+fig, ax = plt.subplots(figsize=(7.2, 3.0))
+ax.plot(sgrid, ds["b"] + ds["a"] * sgrid, color=SER[0], lw=2, label="Composite factor e(s) = b + a·s")
+ax.axhline(ds["e_pc"], color=SER[1], lw=1.4, ls="--", label=f"Per-capita factor (constant {ds['e_pc']:,.0f})")
+ax.plot(sgrid, ds["e_m2"] * sgrid, color=SER[3], lw=1.4, ls=":", label="Per-m² factor (e_m2 × s)")
+# labels sit in empty space (two with leader lines) so no plotted line crosses them
+label_at = [(None, (8, -14)), ((12.6, 700), None), ((16.8, 2450), None), (None, (8, -14))]
+for t, mk, (xy_text, off) in zip(ds["types"], ["o", "s", "D", "^"], label_at):
+    ax.plot(t["s"], t["pp"], mk, ms=7, color=INK, mec=SURF, mew=1.2, zorder=5)
+    name = t["name"].replace(" (this audit)", "").replace(" (method 1)", "").replace(" (47 m², Sha Tin household size)", "")
+    if xy_text:
+        ax.annotate(name, (t["s"], t["pp"]), xytext=xy_text, ha="left", va="center", fontsize=7.4, color=INK,
+                    arrowprops=dict(arrowstyle="-", color=INK2, lw=0.6, shrinkA=2, shrinkB=5))
+    else:
+        ax.annotate(name, (t["s"], t["pp"]), textcoords="offset points", xytext=off, ha="left", fontsize=7.4, color=INK)
+ax.axhline(ds["methods"][7]["factor"], color=INK2, lw=0.8)
+ax.text(5.2, ds["methods"][7]["factor"] + 40, f"HK average {ds['methods'][7]['factor']:,.0f} (EMSD 2021)", fontsize=7.2, color=INK2)
+ax.set_xlabel("Floor area per person, s (m²)")
+ax.set_ylabel("kWh per person per year")
+style(ax)
+ax.set_ylim(0, 4000)
+ax.legend(loc="upper left", fontsize=7.6)
+figs["composite"] = save(fig, "fig14_composite_factor.png")
+
+# Fig: cost of saved energy vs tariff for EMOs with capital cost
+ce = [e for e in emos if isinstance(e["cse"], (int, float))]
+ce = sorted(ce, key=lambda e: e["cse"])
+fig, ax = plt.subplots(figsize=(7.2, 2.9))
+ax.barh([f'{e["ref"]} ' + ("(II)" if e["cat"] == "II" else "(III)") for e in ce], [e["cse"] for e in ce], 0.55,
+        color=[SER[2] if e["cse"] < k["in_TARIFF"] else POS for e in ce])
+for i, e in enumerate(ce):
+    if e["cse"] > 10:
+        ax.text(10.3, i, f"HK${e['cse']:.2f} (off scale)", va="center", ha="right", fontsize=7.6, color=SURF)
+    else:
+        ax.text(e["cse"] + 0.12, i, f"HK${e['cse']:.2f}", va="center", fontsize=7.6, color=INK)
+ax.axvline(k["in_TARIFF"], color=INK2, lw=1, ls="--")
+ax.text(k["in_TARIFF"] + 0.1, -0.9, f"tariff HK${k['in_TARIFF']:.3f}/kWh", fontsize=7.4, color=INK2)
+ax.set_xlabel("Cost of saved energy, HK$ per kWh (4% real, over service life)")
+style(ax, "x")
+ax.set_xlim(0, 10.5)
+ax.set_ylim(-1.3, len(ce) - 0.4)
+figs["cse"] = save(fig, "fig15_emo_cost_of_saved_energy.png")
 
 D["figs"] = {key: dict(file=name, size=Image.open(os.path.join(FIG, name)).size) for key, name in figs.items()}
 

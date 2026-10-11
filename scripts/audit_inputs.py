@@ -59,6 +59,13 @@ SOURCES = [
     ("S30", "HKSAR Govt (2024) buildings ~90% of electricity", "HKSAR Government press release (26 Jun 2024) Energy Saving and Decarbonisation for All campaign: buildings account for about 90% of Hong Kong's electricity consumption.", "https://www.info.gov.hk/gia/general/202406/26/P2024062600623.htm"),
     ("S31", "Climate Action Plan 2050", "HKSAR Government (8 Oct 2021) Hong Kong's Climate Action Plan 2050: carbon neutrality before 2050; halve emissions by 2035 vs 2005; cut residential-building electricity use 20-30% (commercial 30-40%) from 2015 levels by 2050, half of that by 2035.", "https://www.info.gov.hk/gia/general/202110/08/P2021100800588.htm"),
     ("S32", "US DOE Energy Saver", "US Department of Energy, Energy Saver - Maintaining your air conditioner: replacing a dirty, clogged filter with a clean one can lower AC energy consumption by 5% to 15%.", "https://www.energy.gov/energysaver/maintaining-your-air-conditioner"),
+    ("S33", "C&SD district statistics 2025", "Census and Statistics Department (26 Mar 2026) Population and Household Statistics Analysed by District Council District 2025 - Sha Tin: land-based non-institutional population 687,300; 248,200 domestic households; average household size 2.7 (2024 edition: 698,900; 251,200; 2.7).", "https://www.info.gov.hk/gia/general/202603/26/P2026032600228.htm"),
+    ("S34", "Housing in Figures 2025", "Housing Bureau / Hong Kong Housing Authority (2025) Housing in Figures 2025 - average living space per person in public rental housing 14.1 m2 internal floor area (end-Mar 2025; 13.4 in 2020); average household size 2.6.", "https://www.housingauthority.gov.hk/en/common/pdf/about-us/publications-and-statistics/HIF2025.pdf"),
+    ("S35", "HA PRH population report", "Hong Kong Housing Authority (2026) Report on Population and Households in HA Public Rental Housing (as at 30 Jun 2026) - Sha Tin District: about 77,100 households and 190,500 authorised population.", "https://www.housingauthority.gov.hk/en/common/pdf/about-us/publications-and-statistics/PopulationReport.pdf"),
+    ("S36", "LegCo reply 2020 - floor area by housing type", "HKSAR Government (6 May 2020) LegCo reply annex - 2016 Population By-census median floor area of accommodation per household: public housing 35 m2, private housing 47 m2.", "https://gia.info.gov.hk/general/202005/06/P2020050600340_340704_1_1588740372450.pdf"),
+    ("S37", "2021 Census - Sha Tin housing types", "Census and Statistics Department, 2021 Population Census - Sha Tin occupied domestic units: public rental 79,502; subsidised sale 61,819; private permanent 104,280 (via census-data mirror; population 692,806).", "http://census.centamap.com/hong-kong/Sha%20Tin"),
+    ("S38", "EMSD energy end-use data", "EMSD, Hong Kong Energy End-use Data 2023 - residential-sector electricity 2021: 47,464 TJ (13,184 GWh); Hong Kong 2021 Census population 7,413,070 and 2,674,161 domestic households.", "https://www.emsd.gov.hk/filemanager/en/content_762/HKEEUD2023.pdf"),
+    ("S39", "CLP Annual Report 2025", "CLP Holdings (2026) Annual Report 2025 - CLP Power Hong Kong residential sales 9,966 GWh; 2,528,522 residential customer accounts.", "https://sustainability.clpgroup.com/en/2025/serving-our-stakeholders/customers"),
 ]
 
 # Hong Kong Observatory 1991-2020 monthly mean air temperature (degC), day-weighted from the
@@ -177,6 +184,28 @@ INPUTS = [
     ("EF_LONG", "Daily-activity extension", "Long-haul economy, with RF", 0.11704, "kg CO2e/p-km", "Published", "S18", "DESNZ 2025"),
     ("EF_SHORT", "Daily-activity extension", "Short-haul economy, with RF", 0.1258, "kg CO2e/p-km", "Published", "S18", "DESNZ 2025 (derived: total incl. WTT 0.14825 less WTT 0.02249)"),
     ("DIET_EF", "Daily-activity extension", "Mixed (medium meat-eater) diet", 5.63, "kg CO2e/day", "Published", "S19", "Production emissions only"),
+    # --- EMO cost-benefit
+    ("DISC_RATE", "EMO cost-benefit", "Real discount rate for NPV and cost of saved energy", 0.04, "fraction/yr", "Assumed", "", "Typical real rate for public-sector energy appraisal; tested in the report"),
+    ("DEGRADE", "EMO cost-benefit", "Annual decline in savings of hardware EMOs (EAC 7.5.4(b))", 0.01, "fraction/yr", "Assumed", "S1", "Efficiency degradation over the service life"),
+    ("DRYER_DISPLACE", "EMO cost-benefit", "Share of tumble-drying replaced by air-drying", 0.8, "fraction", "Assumed", "", "Bulky items still tumble-dried in humid spells"),
+    ("KLIGHT_SENSOR_H", "EMO cost-benefit", "Kitchen lights on with occupancy sensors", 8, "h/day", "Assumed", "", "Half of the present 16 h/day"),
+    # --- District scaling (Sha Tin District, where Ma On Shan lies)
+    ("ST_POP", "District scaling (Sha Tin)", "Sha Tin population (land-based non-institutional), 2025", 687300, "persons", "Published", "S33", "C&SD district statistics; 2021 Census: 692,806"),
+    ("ST_HH", "District scaling (Sha Tin)", "Sha Tin domestic households, 2025", 248200, "households", "Published", "S33", ""),
+    ("ST_AHS", "District scaling (Sha Tin)", "Sha Tin average domestic household size, 2025", 2.7, "persons/household", "Published", "S33", "HK average 2.6"),
+    ("PRH_SPACE_PP", "District scaling (Sha Tin)", "Average living space per person in public rental housing", 14.1, "m2/person", "Published", "S34", "Internal floor area, end-Mar 2025 (Housing Authority)"),
+    ("PRH_AHS", "District scaling (Sha Tin)", "Average household size in public rental housing", 2.6, "persons/household", "Published", "S34", ""),
+    ("ST_PRH_HH", "District scaling (Sha Tin)", "Housing Authority public rental households in Sha Tin", 77100, "households", "Published", "S35", "As at 30 Jun 2026"),
+    ("ST_SSF_2021", "District scaling (Sha Tin)", "Sha Tin subsidised-sale flats (occupied), 2021 Census", 61819, "units", "Published", "S37", "Used only for the SSF : private split"),
+    ("ST_PRIV_2021", "District scaling (Sha Tin)", "Sha Tin private permanent housing (occupied), 2021 Census", 104280, "units", "Published", "S37", "Used only for the SSF : private split"),
+    ("FLOOR_HH_PUBLIC", "District scaling (Sha Tin)", "Median floor area per household - public housing", 35, "m2", "Published", "S36", "2016 By-census; applied to subsidised-sale flats"),
+    ("FLOOR_HH_PRIVATE", "District scaling (Sha Tin)", "Median floor area per household - private housing", 47, "m2", "Published", "S36", "2016 By-census (saleable area)"),
+    ("HK_RES_GWH", "District scaling (Sha Tin)", "Hong Kong residential electricity, 2021", 13184, "GWh/yr", "Published", "S38", "47,464 TJ"),
+    ("HK_POP_2021", "District scaling (Sha Tin)", "Hong Kong population, 2021 Census", 7413070, "persons", "Published", "S38", ""),
+    ("HK_HH_2021", "District scaling (Sha Tin)", "Hong Kong domestic households, 2021 Census", 2674161, "households", "Published", "S38", ""),
+    ("CLP_RES_GWH", "District scaling (Sha Tin)", "CLP Power residential sales, 2025", 9966, "GWh/yr", "Published", "S39", "CLP supplies Kowloon and the New Territories, including Sha Tin"),
+    ("CLP_RES_ACCTS", "District scaling (Sha Tin)", "CLP Power residential accounts, 2025", 2528522, "accounts", "Published", "S39", ""),
+    ("GAS_SHARE", "District scaling (Sha Tin)", "Share of district residents heating water and cooking with gas (illustrative)", 0.5, "fraction", "Assumed", "", "Typical HK homes use Towngas or LPG; this household is all-electric"),
     # --- Benchmarks
     ("BM_HH_KWH", "Benchmarks", "Typical HK household electricity", 275, "kWh/month", "Published", "S7", "3-person household"),
     ("BM_HH_PERS", "Benchmarks", "Persons in typical household", 3, "persons", "Published", "S7", ""),

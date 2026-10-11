@@ -357,7 +357,7 @@ title(ws, "Monthly energy, EUI and emissions profile (typical baseline year)",
 header(ws, 5, ["Month", "Days", "Season", "Room AC", "Desk fan", "Room lighting", "Room plug loads", "Hot water",
                "Washroom fan + lights (share)", "Kitchen AC (share)", "Kitchen fridges, dispenser, lights (share)",
                "Cooking", "Laundry", "Household total kWh", "Household total MJ", "Room-only kWh",
-               "Room EUI (MJ/m²)", "Per person kWh", "kg CO2e (CLP 0.34)", "kg CO2e (default 0.7)"], height=58)
+               "Room EUI (MJ/m²)", "Per person kWh", "kg CO2e (CLP 0.34)", "kg CO2e (default 0.7)", "Octopus AC spend (HK$)"], height=58)
 for i in range(12):
     r, ir = 6 + i, 5 + i
     put(ws, f"A{r}", MONTHS[i], "text")
@@ -380,17 +380,27 @@ for i in range(12):
     put(ws, f"R{r}", f"=N{r}/OCC", "calc", KWH)
     put(ws, f"S{r}", f"=N{r}*EF_CLP", "calc", KWH)
     put(ws, f"T{r}", f"=N{r}*EF_DEFAULT", "calc", KWH)
+    put(ws, f"U{r}", f"=AC_Baseline!D{6 + i}", "link", HKD)
 put(ws, "A18", "Year", "bold", fill=FILL_TOT)
 put(ws, "C18", "", "calc", fill=FILL_TOT)
-for col in "BDEFGHIJKLMNOPRST":
-    put(ws, f"{col}18", f"=SUM({col}6:{col}17)", "calc", KWH0 if col in "BO" else KWH, bold=True, fill=FILL_TOT)
+for col in "BDEFGHIJKLMNOPRSTU":
+    put(ws, f"{col}18", f"=SUM({col}6:{col}17)", "calc", HKD if col == "U" else KWH0 if col in "BO" else KWH, bold=True, fill=FILL_TOT)
 put(ws, "Q18", "=P18*MJ_PER_KWH/ROOM_AREA", "calc", "0.0", bold=True, fill=FILL_KEY)
 put(ws, "A20", "Check: monthly total - inventory total (must be 0)", "note")
 put(ws, "N20", "=ROUND(N18-HH_KWH,6)", "calc", "0.000")
 put(ws, "A21", "Check: room-only total - room inventory (must be 0)", "note")
 put(ws, "P21", "=ROUND(P18-ROOM_KWH,6)", "calc", "0.000")
+put(ws, "A22", "Since move-in: Jan-Sep 2026 (9 months, EAC 8.1(g)(i) - count back to first day of occupation)", "bold", border=False)
+put(ws, "A23", "Jan-Sep", "bold", fill=FILL_KEY)
+for col in "BDEFGHIJKLMNOPRSTU":
+    put(ws, f"{col}23", f"=SUM({col}6:{col}14)", "calc", HKD if col == "U" else KWH0 if col in "BO" else KWH, bold=True, fill=FILL_KEY)
+put(ws, "C23", "", "calc", fill=FILL_KEY)
+put(ws, "Q23", "=P23*MJ_PER_KWH/ROOM_AREA", "calc", "0.0", bold=True, fill=FILL_KEY)
+add_name("HIST_HH_KWH", "Monthly!$N$23")
+add_name("HIST_ROOM_KWH", "Monthly!$P$23")
+add_name("HIST_SPEND", "Monthly!$U$23")
 add_name("ROOM_EUI_MJ", "Monthly!$Q$18")
-widths(ws, {"A": 7, "B": 6, "C": 7, **{c: 10 for c in "DEFGHIJKLM"}, "N": 11, "O": 10, "P": 10, "Q": 10, "R": 9, "S": 10, "T": 10})
+widths(ws, {"A": 7, "B": 6, "C": 7, **{c: 10 for c in "DEFGHIJKLM"}, "N": 11, "O": 10, "P": 10, "Q": 10, "R": 9, "S": 10, "T": 10, "U": 11})
 ws.freeze_panes = "D6"
 
 ch = BarChart()
@@ -402,7 +412,7 @@ ch.y_axis.title = "kWh/month"
 ch.add_data(Reference(ws, min_col=4, max_col=13, min_row=5, max_row=17), titles_from_data=True)
 ch.set_categories(Reference(ws, min_col=1, min_row=6, max_row=17))
 ch.height, ch.width = 10, 24
-ws.add_chart(ch, "A24")
+ws.add_chart(ch, "A26")
 
 # ======================================================================================
 # BREAKDOWN
@@ -714,33 +724,41 @@ ws.add_chart(bar, "I4")
 # EMO REGISTER
 ws = wb.create_sheet("EMO_Register")
 title(ws, "Energy Management Opportunities (EAC 2018 §6.2 categories; EE-EAes Part 3 types)",
-      "Cat I = housekeeping, no cost; Cat II = low-cost operational changes; Cat III = higher capital cost.  Types: LG lighting, AC air-conditioning, EL electrical, LE lift/escalator, Others.  Capital costs are indicative and must be confirmed by quotation.")
+      "Cat I = housekeeping, no cost; Cat II = low-cost operational changes; Cat III = higher capital cost.  Types: LG lighting, AC air-conditioning, EL electrical, LE lift/escalator, Others.  Capital costs are indicative and must be confirmed by quotation.  Life-cycle columns (P-W) follow EAC §7.5.4: service life and degradation of savings.")
 header(ws, 5, ["Ref", "Cat.", "Type", "Responsible party", "Energy management opportunity", "Basis of saving estimate",
                "Facility saving (kWh/yr)", "Household share (kWh/yr)", "Household saving (HK$/yr)",
                "Indicative capital cost (HK$)", "Simple payback (yr)", "Service life (yr)",
-               "Facility saving (kg CO2e/yr)", "Household saving (kg CO2e/yr)", "Recommendation"], height=58)
+               "Facility saving (kg CO2e/yr)", "Household saving (kg CO2e/yr)", "Recommendation",
+               "Affected end-use before the EMO (kWh/yr, facility)", "Share of that end-use saved",
+               "Facility saving (HK$/yr)", "NPV over service life (HK$)", "Savings-to-investment ratio",
+               "Cost of saved energy (HK$/kWh)", "Life-cycle saving (t CO2e)", "Net cost per t CO2e avoided (HK$/t)"], height=70)
+AC_DJF = "(AC_Baseline!E6+AC_Baseline!E7+AC_Baseline!E17)"
 emos = [
-    ("EMO-01", "I", "AC", "Occupants", "Raise the AC set-point from 25 °C to 26 °C and keep the 20 W desk fan running for air movement", "3% of AC energy per +1 °C (S14)", "=AC_KWH*DEG_SAVING*(26-AC_SETPOINT)", None, 0, "-", "Implement now"),
-    ("EMO-02", "I", "AC", "Occupants", "Use the AC's built-in timer to switch off 2 h before waking in hot months (12 to 10 h/day)", "2/12 of hot-season AC energy", "=AC_KWH_HOT*2/AC_H_HOT", None, 0, "-", "Implement now"),
-    ("EMO-03", "I", "AC", "Occupants", "Clean the AC filter fortnightly in summer, wipe the soiled louvres, close the curtain against late-afternoon NW sun", "5% of AC energy (S26, S32)", "=AC_KWH*0.05", None, 0, "-", "Implement now"),
-    ("EMO-04", "I", "LG", "Occupants", "Use the desk task lights instead of both ceiling battens for 3 of the 6 lit hours", "2 x 20 W x 3 h/day avoided", "=CEIL_N*CEIL_W*3*365/1000", None, 0, "-", "Implement now"),
-    ("EMO-05", "I", "Others", "Occupants", "Shorten showers from 5 to 4 minutes", "20% of shower heating energy", "=HW_KWH*(1-4/SHOWER_MIN)", None, 0, "-", "Implement now"),
-    ("EMO-06", "I", "Others", "Occupants", "Lower the delivered shower temperature from 40 °C to 38 °C (turn the heater dial down)", "2 K of the annual-average temperature rise", "=HW_KWH*2/HW_AVG_DT", None, 0, "-", "Implement now"),
-    ("EMO-07", "I", "EL", "Occupants", "Laptop power management: lower brightness, sleep after 10 min idle, battery-saver mode", "15% of laptop energy (assumed)", "=Inventory!J11*0.15", None, 0, "-", "Implement now"),
-    ("EMO-08", "I", "Others", "Occupants", "Cook with lids, match pan to the induction zone, batch-cook two meals per session", "20% of cooking energy (assumed)", "=Inventory!J20*0.2", None, 0, "-", "Implement now"),
-    ("EMO-09", "II", "AC", "Hall (Student Residence Office)", "Washroom exhaust fan: replace 24 h running with an occupancy / humidistat run-on control (~8 h/day)", "16 of 24 fan-hours avoided", "=WR_FAN_W*(WR_FAN_H-8)*365/1000", "=G{r}*OCC/WR_USERS", 800, 10, "Recommend to hall"),
-    ("EMO-10", "II", "AC", "Hall (Student Residence Office)", "Kitchen AC: 7-day timer + occupancy interlock, set-point locked at 25.5 °C (8 to 5 h/day hot, 4 to 2 h/day cool)", "Label 0.573 kW x hours avoided", "=KAC_LABEL_KWH/LABEL_HOURS*((KAC_H_HOT-5)*DAYS_HOT+(KAC_H_COOL-2)*DAYS_COOL)", "=G{r}*OCC/KIT_USERS", 1000, 10, "Recommend to hall"),
-    ("EMO-11", "II", "Others", "Hall (Student Residence Office)", "Water dispenser: enable night set-back / timer on hot and ice tanks (00:00-06:00)", "25% of dispenser energy (assumed)", "=DISP_KWH_DAY*365*0.25", "=G{r}*OCC/KIT_USERS", 200, 10, "Recommend to hall"),
-    ("EMO-12", "II", "Others", "Hall (Student Residence Office)", "Fit a WELS Grade-1 low-flow showerhead (9 to 7 L/min) in the shared washroom", "22% of shower energy and water, 4 users", "=HW_KWH/OCC*WR_USERS*(1-7/SHOWER_FLOW)", "=HW_KWH*(1-7/SHOWER_FLOW)", 250, 5, "Recommend to hall"),
-    ("EMO-13", "II", "AC", "Hall (Student Residence Office)", "Annual professional clean of the window-AC coil and louvres (heavy soiling seen in photo 03b)", "3% of AC energy (S26)", "=AC_KWH*0.03", None, 400, 1, "Recommend on hygiene grounds; bundle with routine maintenance (EAC 7.6.4)"),
-    ("EMO-14", "II", "EL", "Occupants", "Buy a plug-in power meter (about HK$120) to measure the laptop, fan and AC and verify savings (EAC §7.6.3)", "Enabling measure - no saving claimed", 0, None, 120, 5, "Implement now (within HK$200 budget)"),
-    ("EMO-15", "III", "Others", "Hall (CityU)", "Replace 24.4 kW instantaneous shower heaters with central air-source heat-pump water heating (COP about 3.5) and storage", "Electricity x (1 - 0.99/3.5), 4 users", "=HW_KWH/OCC*WR_USERS*(1-HEATER_EFF/3.5)", "=HW_KWH*(1-HEATER_EFF/3.5)", 20000, 15, "Further study (also cuts peak demand)"),
-    ("EMO-16", "III", "AC", "Hall (CityU)", "Replace the Grade-1 window AC (CSPF 4.66) with a best-in-class split unit (CSPF about 7.5)", "AC x (1 - 4.66/7.5)", "=AC_KWH*(1-AC_CSPF/7.5)", None, 9000, 12, "Not viable - payback exceeds service life"),
-    ("EMO-17", "III", "AC", "Hall (CityU)", "Solar-control film on the NW single glazing (1.55 m²)", "2% of AC energy (assumed)", "=AC_KWH*0.02", None, 800, 10, "Not viable at present"),
-    ("EMO-18", "III", "Others", "Hall (CityU)", "Expand rooftop solar PV under the CLP Feed-in Tariff (the village already has 110 panels)", "Renewable-energy viability statement (EAC §7.4.4(d))", 0, None, 0, 20, "Further study by CityU"),
+    # ref, cat, type, responsible, description, basis, facility kWh, household share, cost, life, recommendation, affected end-use baseline (facility)
+    ("EMO-01", "I", "AC", "Occupants", "Raise the AC set-point from 25 °C to 26 °C and keep the 20 W desk fan running for air movement", "3% of AC energy per +1 °C (S14)", "=AC_KWH*DEG_SAVING*(26-AC_SETPOINT)", None, 0, "-", "Implement now", "=AC_KWH"),
+    ("EMO-02", "I", "AC", "Occupants", "Use the AC's built-in timer to switch off 2 h before waking in hot months (12 to 10 h/day)", "2/12 of hot-season AC energy", "=AC_KWH_HOT*2/AC_H_HOT", None, 0, "-", "Implement now", "=AC_KWH_HOT"),
+    ("EMO-03", "I", "AC", "Occupants", "Clean the AC filter fortnightly in summer, wipe the soiled louvres, close the curtain against late-afternoon NW sun", "5% of AC energy (S26, S32)", "=AC_KWH*0.05", None, 0, "-", "Implement now", "=AC_KWH"),
+    ("EMO-04", "I", "AC", "Occupants", "Cool-season 'fan first': no AC cooling in December-February (HKO mean 16.5-18.2 °C); use the desk fan and open window, Dry mode only on humid days", "Room-AC energy of Dec, Jan and Feb avoided", f"={AC_DJF}", None, 0, "-", "Implement now", f"={AC_DJF}"),
+    ("EMO-05", "I", "LG", "Occupants", "Use the desk task lights instead of both ceiling battens for 3 of the 6 lit hours", "2 x 20 W x 3 h/day avoided", "=CEIL_N*CEIL_W*3*365/1000", None, 0, "-", "Implement now", "=Inventory!J8"),
+    ("EMO-06", "I", "Others", "Occupants", "Shorten showers from 5 to 4 minutes (phone timer or a 4-minute song)", "20% of shower heating energy", "=HW_KWH*(1-4/SHOWER_MIN)", None, 0, "-", "Implement now", "=HW_KWH"),
+    ("EMO-07", "I", "Others", "Occupants", "Lower the delivered shower temperature from 40 °C to 38 °C (turn the heater dial down rather than mixing cold water)", "2 K of the annual-average temperature rise", "=HW_KWH*2/HW_AVG_DT", None, 0, "-", "Implement now", "=HW_KWH"),
+    ("EMO-08", "I", "EL", "Occupants", "Laptop power management: lower brightness, sleep after 10 min idle, battery-saver mode", "15% of laptop energy (assumed)", "=Inventory!J11*0.15", None, 0, "-", "Implement now", "=Inventory!J11"),
+    ("EMO-09", "I", "Others", "Occupants", "Cook with lids, match pan to the induction zone, batch-cook two meals per session", "20% of cooking energy (assumed)", "=Inventory!J20*0.2", None, 0, "-", "Implement now", "=Inventory!J20"),
+    ("EMO-10", "I", "Others", "Occupants", "Air-dry laundry on a rack by the open window instead of tumble-drying (keep the dryer for bulky items in humid spells)", "80% of tumble-dryer energy avoided", "=Inventory!J22*DRYER_DISPLACE", None, 0, "-", "Implement now", "=Inventory!J22"),
+    ("EMO-11", "II", "AC", "Hall (Student Residence Office)", "Washroom exhaust fan: replace 24 h running with an occupancy / humidistat run-on control (~8 h/day)", "16 of 24 fan-hours avoided", "=WR_FAN_W*(WR_FAN_H-8)*365/1000", "=G{r}*OCC/WR_USERS", 800, 10, "Recommend to hall", "=WR_FAN_W*WR_FAN_H*365/1000"),
+    ("EMO-12", "II", "AC", "Hall (Student Residence Office)", "Kitchen AC: 7-day timer + occupancy interlock, set-point locked at 25.5 °C (8 to 5 h/day hot, 4 to 2 h/day cool)", "Label 0.573 kW x hours avoided", "=KAC_LABEL_KWH/LABEL_HOURS*((KAC_H_HOT-5)*DAYS_HOT+(KAC_H_COOL-2)*DAYS_COOL)", "=G{r}*OCC/KIT_USERS", 1000, 10, "Recommend to hall", "=Inventory!H18"),
+    ("EMO-13", "II", "Others", "Hall (Student Residence Office)", "Water dispenser: enable night set-back / timer on hot and ice tanks (00:00-06:00)", "25% of dispenser energy (assumed)", "=DISP_KWH_DAY*365*0.25", "=G{r}*OCC/KIT_USERS", 200, 10, "Recommend to hall", "=Inventory!H17"),
+    ("EMO-14", "II", "Others", "Hall (Student Residence Office)", "Fit a WELS Grade-1 low-flow showerhead (9 to 7 L/min) in the shared washroom", "22% of shower energy and water, 4 users", "=HW_KWH/OCC*WR_USERS*(1-7/SHOWER_FLOW)", "=HW_KWH*(1-7/SHOWER_FLOW)", 250, 5, "Recommend to hall", "=HW_KWH/OCC*WR_USERS"),
+    ("EMO-15", "II", "LG", "Hall (Student Residence Office)", "Kitchen lighting: two ceiling occupancy (PIR) sensors so lights follow use (16 to 8 h/day)", "6 x 15 W x 8 h/day avoided", "=KLIGHT_N*KLIGHT_W*(KLIGHT_H-KLIGHT_SENSOR_H)*365/1000", "=G{r}*OCC/KIT_USERS", 600, 10, "Recommend to hall", "=Inventory!H19"),
+    ("EMO-16", "II", "AC", "Hall (Student Residence Office)", "Annual professional clean of the window-AC coil and louvres (heavy soiling seen in photo 03b)", "3% of AC energy (S26)", "=AC_KWH*0.03", None, 400, 1, "Recommend on hygiene grounds; bundle with routine maintenance (EAC 7.6.4)", "=AC_KWH"),
+    ("EMO-17", "II", "EL", "Occupants", "Buy a plug-in power meter (about HK$120) to measure the laptop, fan and AC and verify savings (EAC §7.6.3)", "Enabling measure - no saving claimed", 0, None, 120, 5, "Implement now (within HK$200 budget)", 0),
+    ("EMO-18", "III", "Others", "Hall (CityU)", "Replace 24.4 kW instantaneous shower heaters with central air-source heat-pump water heating (COP about 3.5) and storage", "Electricity x (1 - 0.99/3.5), 4 users", "=HW_KWH/OCC*WR_USERS*(1-HEATER_EFF/3.5)", "=HW_KWH*(1-HEATER_EFF/3.5)", 20000, 15, "Further study (also cuts peak demand)", "=HW_KWH/OCC*WR_USERS"),
+    ("EMO-19", "III", "AC", "Hall (CityU)", "Replace the Grade-1 window AC (CSPF 4.66) with a best-in-class split unit (CSPF about 7.5)", "AC x (1 - 4.66/7.5)", "=AC_KWH*(1-AC_CSPF/7.5)", None, 9000, 12, "Not viable - payback exceeds service life", "=AC_KWH"),
+    ("EMO-20", "III", "AC", "Hall (CityU)", "Solar-control film on the NW single glazing (1.55 m²)", "2% of AC energy (assumed)", "=AC_KWH*0.02", None, 800, 10, "Not viable at present", "=AC_KWH"),
+    ("EMO-21", "III", "Others", "Hall (CityU)", "Expand rooftop solar PV under the CLP Feed-in Tariff (the village already has 110 panels)", "Renewable-energy viability statement (EAC §7.4.4(d))", 0, None, 0, 20, "Further study by CityU", 0),
 ]
 first_emo = 6
-for k, (ref, cat, typ, resp, desc, basis, g, h, cost, life, rec) in enumerate(emos):
+for k, (ref, cat, typ, resp, desc, basis, g, h, cost, life, rec, base) in enumerate(emos):
     r = first_emo + k
     put(ws, f"A{r}", ref, "bold")
     put(ws, f"B{r}", cat, "text", align=CENTER)
@@ -757,8 +775,20 @@ for k, (ref, cat, typ, resp, desc, basis, g, h, cost, life, rec) in enumerate(em
     put(ws, f"M{r}", f"=G{r}*EF_CLP", "calc", KWH)
     put(ws, f"N{r}", f"=H{r}*EF_CLP", "calc", KWH)
     put(ws, f"O{r}", rec, "text", wrap=True)
+    put(ws, f"P{r}", base, "calc" if isinstance(base, str) else "in", KWH)
+    put(ws, f"Q{r}", f'=IF(P{r}=0,"-",G{r}/P{r})', "calc", PCT)
+    put(ws, f"R{r}", f"=G{r}*TARIFF", "calc", HKD)
+    # NPV with savings declining by DEGRADE per year: PV = S x (1 - q^L)/(r + d), q = (1-d)/(1+r)
+    put(ws, f"S{r}", f'=IF(J{r}=0,"-",R{r}*(1-((1-DEGRADE)/(1+DISC_RATE))^L{r})/(DISC_RATE+DEGRADE)-J{r})', "calc", HKD)
+    put(ws, f"T{r}", f'=IF(J{r}=0,"-",(S{r}+J{r})/J{r})', "calc", "0.00")
+    put(ws, f"U{r}", f'=IF(OR(J{r}=0,G{r}=0),"-",J{r}*DISC_RATE/(1-(1+DISC_RATE)^-L{r})/G{r})', "calc", HKD2)
+    put(ws, f"V{r}", f'=IF(J{r}=0,"-",M{r}*(1-(1-DEGRADE)^L{r})/DEGRADE/1000)', "calc", "0.00")
+    put(ws, f"W{r}", f'=IF(OR(J{r}=0,G{r}=0),"-",-S{r}/V{r})', "calc", HKD)
 last_emo = first_emo + len(emos) - 1
 rng = lambda col: f"${col}${first_emo}:${col}${last_emo}"
+put(ws, f"A{last_emo + 1}", "Life-cycle columns: NPV = facility saving x (1 - ((1 - d)/(1 + r))^L)/(r + d) - cost, with r = DISC_RATE and d = DEGRADE; "
+    "cost of saved energy = cost x r/(1 - (1 + r)^-L) ÷ annual kWh (compare with the HK$1.406/kWh tariff); "
+    "net cost per t CO2e = -NPV ÷ life-cycle tonnes (negative = saves money).", "note")
 s0 = last_emo + 3
 header(ws, s0, ["Category", "No. of EMOs", "Household saving (kWh/yr)", "% of household electricity",
                 "Household saving (kg CO2e/yr)", "Facility saving (kWh/yr)"], height=45)
@@ -786,7 +816,7 @@ add_name("EMO_CAT1_KG", f"EMO_Register!$E${s0 + 1}")
 EMO_SUMMARY_ROW = s0
 EMO_TYPE_ROW = t0
 widths(ws, {"A": 9, "B": 5, "C": 7, "D": 16, "E": 46, "F": 26, "G": 11, "H": 11, "I": 11, "J": 11, "K": 9,
-            "L": 8, "M": 11, "N": 11, "O": 22})
+            "L": 8, "M": 11, "N": 11, "O": 22, "P": 13, "Q": 10, "R": 11, "S": 12, "T": 11, "U": 12, "V": 11, "W": 13})
 ws.freeze_panes = "F6"
 bar = BarChart()
 bar.type = "bar"
@@ -794,8 +824,8 @@ bar.title = "Household saving by EMO (kWh/yr)"
 bar.add_data(Reference(ws, min_col=8, min_row=5, max_row=last_emo), titles_from_data=True)
 bar.set_categories(Reference(ws, min_col=1, min_row=first_emo, max_row=last_emo))
 bar.legend = None
-bar.height, bar.width = 11, 15
-ws.add_chart(bar, f"Q5")
+bar.height, bar.width = 12, 15
+ws.add_chart(bar, "Y5")
 
 # ======================================================================================
 # SENSITIVITY
@@ -843,6 +873,130 @@ bar.height, bar.width = 11, 16
 ws.add_chart(bar, "I5")
 
 # ======================================================================================
+# DISTRICT SCALING (assignment part 3: Sha Tin District)
+ws = wb.create_sheet("District_Scaling")
+title(ws, "District scale-up - Sha Tin District (Ma On Shan lies in Sha Tin)",
+      "Energy per capita and per square metre from this audit are scaled to the district with C&SD and Housing Department data; a composite factor links energy to floor area and number of residents.")
+section(ws, 4, "A. Factors from the audit (household of Room 1003B)", 1, 4)
+header(ws, 5, ["Factor", "Value", "Unit", "Basis"], height=30)
+fa = [
+    ("Electricity per capita (e_pc)", "=HH_KWH/OCC", "kWh/person/yr", "Household electricity ÷ 2 occupants", KWH),
+    ("Electricity per m² of dwelling floor area (e_m2)", "=HH_KWH/ROOM_AREA", "kWh/m²/yr", "Household electricity ÷ 15 m² room (shared-facility energy included)", KWH),
+    ("Room EUI (energy used inside the room only)", "=ROOM_KWH/ROOM_AREA", "kWh/m²/yr", "For reference (EAC EUI basis)", KWH),
+    ("Floor area per person - audited household", "=ROOM_AREA/OCC", "m²/person", "", "0.0"),
+    ("Area-driven energy: room AC + room lighting", "=Inventory!J7+Inventory!J8+Inventory!J9", "kWh/yr", "Loads that scale with conditioned and lit floor area", KWH),
+    ("a = area coefficient", "=B10/ROOM_AREA", "kWh/m²/yr", "Area-driven energy ÷ floor area", "0.00"),
+    ("Person-driven energy: all other loads", "=HH_KWH-B10", "kWh/yr", "Hot water, cooking, plug loads, fan, laundry, shared services", KWH),
+    ("b = resident coefficient", "=B12/OCC", "kWh/person/yr", "Person-driven energy ÷ occupants", "0.0"),
+    ("Area-driven share of household electricity", "=B10/HH_KWH", "%", "", PCT),
+]
+for k, (lab, f, unit, basis, nf) in enumerate(fa):
+    r = 6 + k
+    put(ws, f"A{r}", lab, "text", wrap=True)
+    put(ws, f"B{r}", f, "calc", nf, fill=FILL_KEY if r in (6, 7, 11, 13) else None, bold=r in (6, 7, 11, 13))
+    put(ws, f"C{r}", unit, "text")
+    put(ws, f"D{r}", basis, "text", wrap=True)
+add_name("DS_EPC", "District_Scaling!$B$6")
+add_name("DS_EM2", "District_Scaling!$B$7")
+add_name("DS_A", "District_Scaling!$B$11")
+add_name("DS_B", "District_Scaling!$B$13")
+
+section(ws, 16, "B. Sha Tin District population, households and domestic floor area", 1, 4)
+header(ws, 17, ["Quantity", "Value", "Unit", "Basis / source"], height=30)
+fb = [
+    ("Population (land-based non-institutional), 2025", "=ST_POP", "persons", "C&SD district statistics 2025 (S33)", KWH0),
+    ("Domestic households, 2025", "=ST_HH", "households", "S33", KWH0),
+    ("Average household size", "=ST_AHS", "persons/household", "S33", "0.0"),
+    ("Median floor area per person (Hong Kong, 2021 Census)", "=BM_FLOOR_PP", "m²/person", "S23", "0.0"),
+    ("Method 1 - domestic floor area = population x median floor area per person", "=ST_POP*BM_FLOOR_PP", "m²", "", KWH0),
+    ("   floor area per household (method 1)", "=B22/ST_HH", "m²/household", "", "0.0"),
+    ("Housing Authority public rental households in Sha Tin", "=ST_PRH_HH", "households", "S35", KWH0),
+    ("   public rental floor area = households x 14.1 m²/person x 2.6 persons", "=ST_PRH_HH*PRH_SPACE_PP*PRH_AHS", "m²", "Housing in Figures 2025 (S34)", KWH0),
+    ("Other households (subsidised sale + private)", "=ST_HH-ST_PRH_HH", "households", "", KWH0),
+    ("   subsidised-sale share of other households (2021 Census mix)", "=ST_SSF_2021/(ST_SSF_2021+ST_PRIV_2021)", "%", "S37", PCT),
+    ("   subsidised-sale floor area (median 35 m² per household)", "=B26*B27*FLOOR_HH_PUBLIC", "m²", "S36", KWH0),
+    ("   private floor area (median 47 m² per household)", "=B26*(1-B27)*FLOOR_HH_PRIVATE", "m²", "S36", KWH0),
+    ("Method 2 - domestic floor area by housing type", "=B25+B28+B29", "m²", "Housing Department + Census medians", KWH0),
+    ("   method 2 vs method 1", "=B30/B22-1", "%", "", PCT),
+    ("District floor area per person (method 1)", "=B22/ST_POP", "m²/person", "", "0.0"),
+]
+for k, (lab, f, unit, basis, nf) in enumerate(fb):
+    r = 18 + k
+    put(ws, f"A{r}", lab, "text", wrap=True)
+    put(ws, f"B{r}", f, "calc", nf, fill=FILL_KEY if r in (22, 30) else None, bold=r in (22, 30))
+    put(ws, f"C{r}", unit, "text")
+    put(ws, f"D{r}", basis, "text", wrap=True)
+add_name("ST_AREA1", "District_Scaling!$B$22")
+add_name("ST_AREA2", "District_Scaling!$B$30")
+
+section(ws, 34, "C. Scaled-up residential electricity of Sha Tin District", 1, 7)
+header(ws, 35, ["Method", "Factor", "Factor unit", "Scaling quantity", "Quantity unit", "District electricity (GWh/yr)", "vs EMSD benchmark"], height=45)
+hwcook = "(HW_KWH+Inventory!J20)/OCC"
+fc = [
+    ("(1) Per capita: e_pc x population", "=DS_EPC", "kWh/person/yr", "=ST_POP", "persons", "=B36*D36/1e6"),
+    ("(2) Per m²: e_m2 x floor area (method 1)", "=DS_EM2", "kWh/m²/yr", "=ST_AREA1", "m²", "=B37*D37/1e6"),
+    ("(2b) Per m²: e_m2 x floor area (method 2)", "=DS_EM2", "kWh/m²/yr", "=ST_AREA2", "m²", "=B38*D38/1e6"),
+    ("(3) Per household: household electricity x households", "=HH_KWH", "kWh/household/yr", "=ST_HH", "households", "=B39*D39/1e6"),
+    ("(4) Composite: a x floor area + b x residents (method 1 area)", "=DS_A", "a, kWh/m²/yr", "=ST_AREA1", "m²", "=(DS_A*ST_AREA1+DS_B*ST_POP)/1e6"),
+    ("(4b) Composite with method 2 floor area", "=DS_A", "a, kWh/m²/yr", "=ST_AREA2", "m²", "=(DS_A*ST_AREA2+DS_B*ST_POP)/1e6"),
+    ("(4c) Composite, allowing for gas water heating and cooking", f"={hwcook}", "kWh/person/yr moved to gas", "=ST_POP*GAS_SHARE", "residents using gas", "=F40-B42*D42/1e6"),
+    ("Benchmark A: HK residential electricity per person (EMSD 2021) x population", "=HK_RES_GWH*1e6/HK_POP_2021", "kWh/person/yr", "=ST_POP", "persons", "=B43*D43/1e6"),
+    ("Benchmark B: CLP residential sales per account (2025) x households", "=CLP_RES_GWH*1e6/CLP_RES_ACCTS", "kWh/account/yr", "=ST_HH", "households", "=B44*D44/1e6"),
+]
+for k, (lab, f, unit, q, qu, gwh) in enumerate(fc):
+    r = 36 + k
+    put(ws, f"A{r}", lab, "text", wrap=True)
+    put(ws, f"B{r}", f, "calc", KWH)
+    put(ws, f"C{r}", unit, "text", wrap=True)
+    put(ws, f"D{r}", q, "calc", KWH0)
+    put(ws, f"E{r}", qu, "text")
+    put(ws, f"F{r}", gwh, "calc", KWH, fill=FILL_KEY, bold=True)
+    put(ws, f"G{r}", f"=F{r}/$F$43-1", "calc", PCT)
+put(ws, "A46", "Per-m² estimate ÷ per-capita estimate", "text")
+put(ws, "B46", "=F37/F36", "calc", "0.00")
+put(ws, "C46", "equals district floor area per person ÷ audited floor area per person:", "note")
+put(ws, "F46", "=B32/B9", "calc", "0.00")
+put(ws, "A47", "Composite estimate ÷ per-capita estimate", "text")
+put(ws, "B47", "=F40/F36", "calc", "0.00")
+add_name("ST_GWH_PC", "District_Scaling!$F$36")
+add_name("ST_GWH_M2", "District_Scaling!$F$37")
+add_name("ST_GWH_COMP", "District_Scaling!$F$40")
+
+section(ws, 50, "D. The composite factor: energy vs floor area and number of residents", 1, 7)
+put(ws, "A51", "Household electricity E = a x A + b x N   (A = floor area, N = residents).  Per person: e(s) = b + a x s, where s = floor area per person.  Per m²: e(d) = a + b x d, where d = residents per m².", "note")
+header(ws, 52, ["Household type", "Floor area per person s (m²)", "Residents N", "Floor area A (m²)", "Electricity E = aA + bN (kWh/yr)", "Per person (kWh/yr)", "Per m² (kWh/m²/yr)"], height=45)
+fd = [
+    ("Audited student room (this audit)", "=ROOM_AREA/OCC", "=OCC"),
+    ("Sha Tin public rental flat", "=PRH_SPACE_PP", "=PRH_AHS"),
+    ("Sha Tin average household (method 1)", "=B32", "=ST_AHS"),
+    ("Private flat (47 m², Sha Tin household size)", "=FLOOR_HH_PRIVATE/ST_AHS", "=ST_AHS"),
+]
+for k, (lab, sval, n) in enumerate(fd):
+    r = 53 + k
+    put(ws, f"A{r}", lab, "text", wrap=True)
+    put(ws, f"B{r}", sval, "calc", "0.0")
+    put(ws, f"C{r}", n, "calc", "0.0")
+    put(ws, f"D{r}", f"=B{r}*C{r}", "calc", "0.0")
+    put(ws, f"E{r}", f"=DS_A*D{r}+DS_B*C{r}", "calc", KWH0)
+    put(ws, f"F{r}", f"=E{r}/C{r}", "calc", KWH0)
+    put(ws, f"G{r}", f"=E{r}/D{r}", "calc", KWH)
+put(ws, "A58", "Check: the composite factor reproduces the audited household exactly (must be 0)", "note")
+put(ws, "E58", "=ROUND(E53-HH_KWH,6)", "calc", "0.000")
+put(ws, "A59", "Hong Kong average residential electricity per household, 2021 (EMSD ÷ Census households)", "text", wrap=True)
+put(ws, "E59", "=HK_RES_GWH*1e6/HK_HH_2021", "calc", KWH0, fill=FILL_KEY)
+put(ws, "A60", "Composite estimate for the Sha Tin average household vs the Hong Kong average", "text", wrap=True)
+put(ws, "E60", "=E55/E59-1", "calc", PCT)
+widths(ws, {"A": 58, "B": 14, "C": 16, "D": 16, "E": 16, "F": 16, "G": 14})
+bar = BarChart()
+bar.type = "bar"
+bar.title = "Sha Tin residential electricity - scaling methods (GWh/yr)"
+bar.add_data(Reference(ws, min_col=6, min_row=35, max_row=44), titles_from_data=True)
+bar.set_categories(Reference(ws, min_col=1, min_row=36, max_row=44))
+bar.legend = None
+bar.height, bar.width = 10, 18
+ws.add_chart(bar, "I4")
+
+# ======================================================================================
 # EE-EAes SUMMARY (home adaptation)
 ws = wb.create_sheet("EE-EAes_Summary")
 title(ws, "Executive Summary - adapted from EMSD Technical Form EE-EAes (V.2)",
@@ -875,7 +1029,7 @@ form_row("1)(c) No. of blocks", "Village of 3 towers / 6 halls (S15); audited un
 form_row("2) Internal floor area of audited unit (m²)", "=ROOM_AREA", "link", "0.0")
 form_row("3) Floor of audited unit", "10/F", "text")
 form_row("4) Major type of facade", "MiC concrete modules; dark aluminium-framed single-glazed casement window facing NW (328°)", "text")
-form_row("5) Occupation", "Opened Q3 2024; naming ceremony 6 Dec 2024 (S15)", "text")
+form_row("5) Occupation", "Opened Q3 2024; opening and naming ceremony Dec 2024 (S15)", "text")
 form_row("6) Type of central air-conditioning", "Not applicable - unitary window AC (room) and split AC (kitchen)", "text")
 form_row("7) Weekly occupied hours of the room", "=OCC_WKDAY_H*5+OCC_SAT_H+OCC_SUN_H", "link", "0")
 form_row("   Daily average no. of occupants", "=OCC", "link", "0")
@@ -951,67 +1105,84 @@ for k in range(len(emos)):
 widths(ws, {"A": 46, "B": 16, "C": 16, "D": 16, "E": 16, "F": 14, "G": 10, "H": 12})
 
 # ======================================================================================
-# EE-EAes ENTRY GUIDE (for typing into the official macro-enabled form in Excel)
-ws = wb.create_sheet("EE-EAes_Entry_Guide")
-title(ws, "Entry guide - copy these values into the official EMSD form EE-EAes (V.2)",
-      "Open 2_EE-EAes2018 (V.0)_SEE6115-8115.xls in Excel with macros ENABLED (the form hides its sheets otherwise). Type each value into the cell shown; tick-boxes are listed as 'Tick'. Values link to this workbook.")
-header(ws, 4, ["Form sheet", "Cell", "Field on the form", "Value to enter", "Note"], height=30)
+# EE-EAes FORM ENTRIES (what fill_eeaes_form.py writes into the official macro-enabled form)
+ws = wb.create_sheet("EE-EAes_Form_Entries")
+title(ws, "EE-EAes (V.2) form entries - values written into the official EMSD form",
+      "fill_eeaes_form.py copies these values into 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls (macros kept; open it in Excel with macros enabled). "
+      "Only sections relevant to a household are completed; CBSI and lift & escalator items are marked N/A as the form instructs.")
+header(ws, 4, ["Form sheet", "Cell / control", "Field on the form", "Value entered", "Entry type", "Relevance / note"], height=30)
 G = []
-def g(sheet, cellref, field, val, note="", nf=None):
-    G.append((sheet, cellref, field, val, note, nf))
-g("Part 1(A)", "C15", "Name of building", f"{AUDIT['building']} - {AUDIT['room']} (voluntary home audit)")
-g("Part 1(A)", "C16", "Address of building", AUDIT["district"])
-g("Part 1(A)", "H17", "1) Date of commencement", AUDIT["audit_start"], "dd/mm/yyyy")
-g("Part 1(A)", "H19", "2) Date of completion", AUDIT["audit_end"], "dd/mm/yyyy")
-g("Part 1(A)", "G21 / J21", "3) Form validity (issued / expired)", "N/A", "Not issued under Cap. 610")
-g("Part 1(A)", "H23", "4) Report reference no.", "SEE8115-HEA-2026-01")
-g("Part 1(A)", "Tick-box", "5) Import / export energy?", "Tick 'No'")
-g("Part 1(B)(I)", "Tick-boxes", "1)(a) Type of building", "Leave unticked", "Only commercial types are offered; explain in H6")
-g("Part 1(B)(I)", "H6", "1)(a) free-text cell", "Residential student hostel (not prescribed under Cap. 610)")
-g("Part 1(B)(I)", "H7", "1)(b) Common area %", 0, "", "0")
-g("Part 1(B)(I)", "H8", "1)(c) No. of blocks", 1, "Audited unit only", "0")
-g("Part 1(B)(I)", "H9", "2) Total internal floor area (m2)", "=ROOM_AREA", "", "0.0")
-g("Part 1(B)(I)", "H10", "3) No. of floors", "10/F (audited unit)")
-g("Part 1(B)(I)", "H11", "4) Major type of facade", "MiC concrete modules; single-glazed aluminium windows (NW)")
-g("Part 1(B)(I)", "H12", "5) Date of occupation", "Q3 2024 (opened)")
-g("Part 1(B)(I)", "Tick-box", "6) Type of central AC", "Tick 'Not applicable'", "Unitary window AC only")
-g("Part 1(B)(I)", "G60", "8)(f) Others - General, AC: % area", "100%", "Whole room is air-conditioned")
-g("Part 1(B)(I)", "H60", "8)(f) weekday hours (hrs/week)", "=OCC_WKDAY_H*5", "", "0")
-g("Part 1(B)(I)", "I60", "8)(f) weekend hours (hrs/week)", "=OCC_SAT_H+OCC_SUN_H", "", "0")
-g("Part 1(B)(I)", "H23", "7)(f) Others - average weekly operating hours", "=OCC_WKDAY_H*5+OCC_SAT_H+OCC_SUN_H", "", "0")
-g("Part 1(B)(I)", "I23", "7)(f) Others - daily average occupants", "=OCC", "", "0")
-g("Part 2", "E2", "1) Electricity, past 1st 12-month (kWh/annum)", "=ROUND(ROOM_KWH,1)", "Room 1003B boundary", KWH)
-g("Part 2", "G2 / I2", "1) Past 2nd and 3rd 12-month", "N/A", "Occupied from Jan 2026 (EAC 8.1(g)(i))")
-g("Part 2", "E5", "2) Other energy, past 1st 12-month (MJ/annum)", 0, "No Towngas / LPG", "0")
-g("Part 2", "G5 / I5", "2) Past 2nd and 3rd 12-month", "N/A")
+def g(sheet, cellref, field, val, kind, note="", nf=None):
+    G.append((sheet, cellref, field, val, kind, note, nf))
+NA_CBSI = "N/A - CBSI item (no central building services in a household)"
+g("Part 1(A)", "C15", "Name of building", f"{AUDIT['room']}, {AUDIT['building']} (household energy audit)", "text", "Audited unit = the household's room")
+g("Part 1(A)", "C16", "Address of building", "Lee Shau Kee Student Residence Village, Ma On Shan, Sha Tin District, New Territories, Hong Kong", "text")
+g("Part 1(A)", "H17", "1) Date of commencement of energy audit", AUDIT["audit_start"], "date", "dd/mm/yyyy")
+g("Part 1(A)", "H19", "2) Date of completion of energy audit", AUDIT["audit_end"], "date", "Within 6 months of the reference month (Sep 2026)")
+g("Part 1(A)", "G21", "3) Energy Audit Form issued on", "N/A", "text", "Voluntary audit - no form issued under Cap. 610")
+g("Part 1(A)", "J21", "3) Energy Audit Form expired on", "N/A", "text", "As above")
+g("Part 1(A)", "H23", "4) Energy Audit Report reference no.", "SEE8115-HEA-2026-01", "text")
+g("Part 1(A)", "obj:124", "5) Import / export energy from/to other building?", "Tick 'No'", "tick", "Room supplied from the hall's CLP supply")
+for c in ("E27", "H27", "J27"):
+    g("Part 1(A)", c, "5) Building(s) importing / exporting energy", "N/A", "text", "Answer to item 5 is No")
+g("Part 1(B)(I)", "-", "1)(a) Type of building", "Not ticked", "none", "Only commercial types are offered; the audited unit is residential (student hostel)")
+g("Part 1(B)(I)", "H7", "1)(b) Portion of the building entity being common area (%)", 0, "number", "The audited room has no common area; shared facilities are allocated in the report", "0")
+g("Part 1(B)(I)", "H8", "1)(c) No. of blocks of the building entity", 1, "number", "", "0")
+g("Part 1(B)(I)", "H9", "2) Total internal floor area (m2)", "=ROOM_AREA", "number", "Room 1003B", "0.0")
+g("Part 1(B)(I)", "H10", "3) No. of floors of the building entity", 1, "number", "Audited unit is on 10/F", "0")
+g("Part 1(B)(I)", "obj:35", "4) Major type of building facade", "Tick 'Non-curtain wall'", "tick", "MiC concrete modules with aluminium windows")
+g("Part 1(B)(I)", "H12", "5) Date of issue of occupation approval", "Q3 2024 (residence opened; occupation-approval date not published)", "text")
+g("Part 1(B)(I)", "obj:12", "6) Type of central air-conditioning provided", "Tick 'Not applicable'", "tick", "Unitary window AC (room) and split AC (kitchen) only")
+for rr in range(18, 24):
+    g("Part 1(B)(I)", f"H{rr}", f"7) Average weekly operating hours - row {rr}", "N/A", "text", NA_CBSI)
+    if rr != 22:
+        g("Part 1(B)(I)", f"I{rr}", f"7) Daily average no. of occupants - row {rr}", "N/A", "text", NA_CBSI)
+g("Part 1(B)(I)", "D60", "8)(f) Others (please specify)", "N/A - no CBSI-served area in the audited unit", "text", NA_CBSI)
+g("Part 2", "E2", "1) Annual electricity, past 1st 12-month (kWh/annum)", "=ROUND(ROOM_KWH,1)", "number", "Room 1003B (typical 12 months to Sep 2026)", KWH)
+g("Part 2", "G2", "1) Past 2nd 12-month", "N/A", "text", "Occupied from Jan 2026 (EAC 8.1(g)(i))")
+g("Part 2", "I2", "1) Past 3rd 12-month", "N/A", "text", "Occupied from Jan 2026")
+g("Part 2", "E5", "2) Other energy, past 1st 12-month (MJ/annum)", 0, "number", "No Towngas / LPG", "0")
+g("Part 2", "G5", "2) Past 2nd 12-month", "N/A", "text", "")
+g("Part 2", "I5", "2) Past 3rd 12-month", "N/A", "text", "")
 ref_order = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
 slots = ["C14", "E14", "G14", "I14", "C16", "E16", "G16", "I16", "C18", "E18", "G18", "I18"]
 for k, (slot, mon) in enumerate(zip(slots, ref_order)):
-    g("Part 2", slot, f"5) Monthly EUI - {k + 1}{'st' if k == 0 else 'nd' if k == 1 else 'rd' if k == 2 else 'th'} month ({mon})",
-      f"=ROUND(Monthly!Q{6 + MONTHS.index(mon)},2)", "MJ/m2/month; 12th month = reference month (Sep 2026)", "0.00")
-g("Part 2", "C20", "6) Air-conditioning (MJ/annum)", "=ROUND(Breakdown!F21,0)", "Incl. desk fan", KWH0)
-g("Part 2", "E20", "6) Lighting (MJ/annum)", "=ROUND(Breakdown!F22,0)", "", KWH0)
-g("Part 2", "G20", "6) Lift & escalator (MJ/annum)", 0, "Not applicable", "0")
-g("Part 2", "I20", "6) Others (MJ/annum)", "=ROUND(Breakdown!F23,0)", "Laptops, phones", KWH0)
-g("Part 2", "I22", "7) Energy supply from CBSI (%)", "N/A", "Shared-services share is reported in the report instead")
-g("Part 2", "I24", "8) Energy bill reference month", "30/09/2026", "Octopus pre-paid AC; no utility bill")
-chosen = ["EMO-01", "EMO-02", "EMO-03", "EMO-04", "EMO-05", "EMO-06", "EMO-07", "EMO-09", "EMO-10", "EMO-12", "EMO-15", "EMO-18"]
-for k, ref in enumerate(chosen):
-    er = first_emo + int(ref[-2:]) - 1
+    g("Part 2", slot, f"5) Monthly EUI - month {k + 1} ({mon})", f"=ROUND(Monthly!Q{6 + MONTHS.index(mon)},2)", "number",
+      "MJ/m2/month; month 12 = reference month (Sep 2026)", "0.00")
+g("Part 2", "C20", "6) Breakdown - air-conditioning (MJ/annum)", "=ROUND(Breakdown!F21,0)", "number", "Room AC + desk fan", KWH0)
+g("Part 2", "E20", "6) Breakdown - lighting (MJ/annum)", "=ROUND(Breakdown!F22,0)", "number", "", KWH0)
+g("Part 2", "G20", "6) Breakdown - lift & escalator (MJ/annum)", "N/A", "text", "Lift & escalator item - not relevant to a household")
+g("Part 2", "I20", "6) Breakdown - others (MJ/annum)", "=ROUND(Breakdown!F23,0)", "number", "Laptops, phone chargers", KWH0)
+g("Part 2", "I22", "7) Energy supply from CBSI to building's units (%)", "N/A", "text", NA_CBSI)
+g("Part 2", "I24", "8) Energy bill reference month", "30/09/2026", "date", "September 2026 (Octopus pre-paid AC; no utility bill)")
+FORM_EMOS = ["EMO-01", "EMO-02", "EMO-04", "EMO-05", "EMO-06", "EMO-08", "EMO-10", "EMO-11", "EMO-12", "EMO-14", "EMO-18", "EMO-21"]
+CAT_COL = {"I": "P", "II": "Q", "III": "R"}
+TYPE_COL = {"LG": "S", "EL": "T", "AC": "U", "LE": "V", "Others": "W"}
+emo_index = {e[0]: k for k, e in enumerate(emos)}
+for k, ref in enumerate(FORM_EMOS):
+    er = first_emo + emo_index[ref]
+    _, cat, typ = emos[emo_index[ref]][:3]
     fr = 9 + 2 * k
-    g("Part 3", f"A{fr}", f"EMO slot {k + 1} - reference", ref)
-    g("Part 3", f"Row {fr} tick-boxes", f"EMO slot {k + 1} - category / type",
-      f'="Tick Category "&EMO_Register!B{er}&" and type "&EMO_Register!C{er}')
-    g("Part 3", f"H{fr}", f"EMO slot {k + 1} - description", f'=EMO_Register!E{er}&IF(EMO_Register!H{er}>0,". Saving about "&TEXT(EMO_Register!H{er},"#,##0")&" kWh/yr (household share).",". Viability statement only - no saving claimed.")')
-g("Part 3", "H31 (append)", "Additional EMOs", "Add: 'EMO-08, -11, -13, -14, -16 and -17 are listed in the attached EMO register.'", "The form asks for an extra sheet if rows run out")
-for k, (sheet, cellref, field, val, note, nf) in enumerate(G):
+    g("Part 3", f"A{fr}", f"EMO slot {chr(65 + k)} - reference", ref, "text")
+    g("Part 3", f"link:{CAT_COL[cat]}{fr}", f"EMO slot {chr(65 + k)} - category", f"Tick Category {cat}", "tick")
+    g("Part 3", f"link:{TYPE_COL[typ]}{fr}", f"EMO slot {chr(65 + k)} - type", f"Tick {typ}", "tick")
+    tail = " Other EMOs (03, 07, 09, 13, 15, 16, 17, 19, 20) are in the report's EMO register (21 EMOs)." if k == len(FORM_EMOS) - 1 else ""
+    desc = (f'=IF(EMO_Register!G{er}=0,EMO_Register!E{er}&". Viability statement only (EAC 7.4.4(d)); no saving claimed.",'
+            f'EMO_Register!E{er}&". Saves "&TEXT(EMO_Register!G{er},"#,##0")&" kWh/yr"'
+            f'&IF(ROUND(EMO_Register!G{er}-EMO_Register!H{er},1)<>0," (household share "&TEXT(EMO_Register!H{er},"#,##0")&")","")'
+            f'&", HK$"&TEXT(EMO_Register!R{er},"#,##0")&"/yr, "&TEXT(EMO_Register!M{er},"#,##0")&" kg CO2e/yr; cost HK$"&TEXT(EMO_Register!J{er},"#,##0")'
+            f'&"; payback "&IF(EMO_Register!J{er}=0,"immediate",TEXT(EMO_Register!K{er},"0.0")&" yr; NPV HK$"&TEXT(EMO_Register!S{er},"#,##0"))&".")'
+            f'&"{tail}"')
+    g("Part 3", f"H{fr}", f"EMO slot {chr(65 + k)} - description", desc, "text")
+for k, (sheet, cellref, field, val, kind, note, nf) in enumerate(G):
     rr = 5 + k
     put(ws, f"A{rr}", sheet, "text")
     put(ws, f"B{rr}", cellref, "bold")
     put(ws, f"C{rr}", field, "text", wrap=True)
     put(ws, f"D{rr}", val, "link" if isinstance(val, str) and val.startswith("=") else "text", nf, wrap=True)
-    put(ws, f"E{rr}", note, "text", wrap=True)
-widths(ws, {"A": 13, "B": 16, "C": 40, "D": 60, "E": 36})
+    put(ws, f"E{rr}", kind, "text")
+    put(ws, f"F{rr}", note, "text", wrap=True)
+widths(ws, {"A": 13, "B": 14, "C": 42, "D": 70, "E": 10, "F": 44})
 ws.freeze_panes = "A5"
 
 # ======================================================================================
@@ -1129,10 +1300,11 @@ guide = [
     ("Breakdown", "End-use and EAC-category breakdown, KPIs and HK benchmarks"),
     ("GHG_Inventory", "Scope 1-2-3 inventory in HK GHG Guidelines table format"),
     ("Lifestyle_Scope3", "Auditor's commuting, flights and diet (reported separately)"),
-    ("EMO_Register", "18 EMOs by EAC category, with savings, costs, payback and CO2e"),
+    ("EMO_Register", "21 EMOs by EAC category: savings, cost, payback, NPV, SIR, cost of saved energy and CO2e"),
     ("Sensitivity", "One-at-a-time sensitivity of the key assumptions"),
+    ("District_Scaling", "Assignment part 3: per-capita, per-m² and composite scale-up to Sha Tin District"),
     ("EE-EAes_Summary", "Executive summary in the structure of EMSD form EE-EAes"),
-    ("EE-EAes_Entry_Guide", "Cell-by-cell values to type into the official macro-enabled EE-EAes form"),
+    ("EE-EAes_Form_Entries", "Values written into the official EE-EAes form (relevant sections only)"),
     ("Photo_Log", "Evidence photographs and the data taken from each"),
     ("Sources", "Full references with URLs"),
 ]

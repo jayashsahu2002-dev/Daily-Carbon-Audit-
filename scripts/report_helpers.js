@@ -54,7 +54,7 @@ function P(text, opts = {}) {
     const next = lines[i + 1];
     if (isB(ln)) return bulletPara(ln.slice(2), 0, next && !isB(next) ? 120 : 60);
     const o = { ...opts, before: i === 0 ? opts.before : 0 };
-    if (isB(next)) o.after = 40;
+    if (isB(next)) { o.after = 40; o.keepNext = true; } // keep a lead-in line with its first bullet
     else if (next) o.after = 120;
     return para(ln, o);
   });

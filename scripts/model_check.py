@@ -154,26 +154,64 @@ def compute():
     lap = next(i for i in inv if i["id"] == "R5")["hh"]
     cook = next(i for i in inv if i["id"] == "K5")["hh"]
     wr_fan_total = V["WR_FAN_W"] * V["WR_FAN_H"] * 365 / 1000
+    dryer = next(i for i in inv if i["id"] == "L2")["hh"]
+    klight_total = V["KLIGHT_N"] * V["KLIGHT_W"] * V["KLIGHT_H"] * 365 / 1000
+    # facility-level savings (kWh/yr), keyed by EMO number
     emo = {
-        "A1": r["ac_topdown"] * V["DEG_SAVING"] * 1,
-        "A2": r["ac_hot"] * 2 / V["AC_H_HOT"],
-        "A3": r["ac_topdown"] * 0.05,
-        "L1": V["CEIL_N"] * V["CEIL_W"] * 3 * 365 / 1000,
-        "H1": r["hw_year"] * (1 - 4 / 5),
-        "H2": r["hw_year"] * 2 / r["hw_avg_dt"],
-        "E1": lap * 0.15,
-        "K1": cook * 0.2,
-        "V1": wr_fan_total * (24 - 8) / 24,
-        "K2": kac_avg * (3 * V["DAYS_HOT"] + 2 * V["DAYS_COOL"]),
-        "K3": V["DISP_KWH_DAY"] * 365 * 0.25,
-        "H3": r["hw_year"] * (1 - 7 / 9) * V["WR_USERS"] / occ,
-        "A4": r["ac_topdown"] * 0.03,
-        "H4": r["hw_year"] * (1 - V["HEATER_EFF"] / 3.5) * V["WR_USERS"] / occ,
-        "G1": r["ac_topdown"] * 0.02,
-        "A5": r["ac_topdown"] * (1 - V["AC_CSPF"] / 7.5),
+        "EMO-01": r["ac_topdown"] * V["DEG_SAVING"] * 1,
+        "EMO-02": r["ac_hot"] * 2 / V["AC_H_HOT"],
+        "EMO-03": r["ac_topdown"] * 0.05,
+        "EMO-04": ac_td[0] + ac_td[1] + ac_td[11],
+        "EMO-05": V["CEIL_N"] * V["CEIL_W"] * 3 * 365 / 1000,
+        "EMO-06": r["hw_year"] * (1 - 4 / 5),
+        "EMO-07": r["hw_year"] * 2 / r["hw_avg_dt"],
+        "EMO-08": lap * 0.15,
+        "EMO-09": cook * 0.2,
+        "EMO-10": dryer * V["DRYER_DISPLACE"],
+        "EMO-11": wr_fan_total * (24 - 8) / 24,
+        "EMO-12": kac_avg * (3 * V["DAYS_HOT"] + 2 * V["DAYS_COOL"]),
+        "EMO-13": V["DISP_KWH_DAY"] * 365 * 0.25,
+        "EMO-14": r["hw_year"] * (1 - 7 / 9) * V["WR_USERS"] / occ,
+        "EMO-15": klight_total * (V["KLIGHT_H"] - V["KLIGHT_SENSOR_H"]) / V["KLIGHT_H"],
+        "EMO-16": r["ac_topdown"] * 0.03,
+        "EMO-17": 0.0,
+        "EMO-18": r["hw_year"] * (1 - V["HEATER_EFF"] / 3.5) * V["WR_USERS"] / occ,
+        "EMO-19": r["ac_topdown"] * (1 - V["AC_CSPF"] / 7.5),
+        "EMO-20": r["ac_topdown"] * 0.02,
+        "EMO-21": 0.0,
     }
+    share = {"EMO-11": occ / V["WR_USERS"], "EMO-12": k_share, "EMO-13": k_share, "EMO-14": occ / V["WR_USERS"],
+             "EMO-15": k_share, "EMO-18": occ / V["WR_USERS"]}
+    r["emo_hh"] = {k: v * share.get(k, 1.0) for k, v in emo.items()}
+    cost = {"EMO-11": 800, "EMO-12": 1000, "EMO-13": 200, "EMO-14": 250, "EMO-15": 600, "EMO-16": 400, "EMO-17": 120,
+            "EMO-18": 20000, "EMO-19": 9000, "EMO-20": 800}
+    life = {"EMO-11": 10, "EMO-12": 10, "EMO-13": 10, "EMO-14": 5, "EMO-15": 10, "EMO-16": 1, "EMO-17": 5,
+            "EMO-18": 15, "EMO-19": 12, "EMO-20": 10}
+    rate, deg = V["DISC_RATE"], V["DEGRADE"]
+    npv = {}
+    for key, c in cost.items():
+        s_hkd = emo[key] * V["TARIFF"]
+        pv = sum(s_hkd * (1 - deg) ** (t - 1) / (1 + rate) ** t for t in range(1, life[key] + 1))
+        npv[key] = pv - c
+    r["emo_npv"] = npv
+
+    # ---------------- District scaling (Sha Tin)
+    area_driven = r["ac_topdown"] + next(i for i in inv if i["id"] == "R2")["hh"] + next(i for i in inv if i["id"] == "R3")["hh"]
+    a = area_driven / V["ROOM_AREA"]
+    b = (r["hh_kwh"] - area_driven) / occ
+    area1 = V["ST_POP"] * V["BM_FLOOR_PP"]
+    other = V["ST_HH"] - V["ST_PRH_HH"]
+    ssf = V["ST_SSF_2021"] / (V["ST_SSF_2021"] + V["ST_PRIV_2021"])
+    area2 = (V["ST_PRH_HH"] * V["PRH_SPACE_PP"] * V["PRH_AHS"] + other * ssf * V["FLOOR_HH_PUBLIC"]
+             + other * (1 - ssf) * V["FLOOR_HH_PRIVATE"])
+    r["ds_a"], r["ds_b"], r["ds_area1"], r["ds_area2"] = a, b, area1, area2
+    r["ds_pc_gwh"] = r["hh_kwh"] / occ * V["ST_POP"] / 1e6
+    r["ds_m2_gwh"] = r["hh_kwh"] / V["ROOM_AREA"] * area1 / 1e6
+    r["ds_comp_gwh"] = (a * area1 + b * V["ST_POP"]) / 1e6
+    r["ds_comp_gas_gwh"] = r["ds_comp_gwh"] - (r["hw_year"] + cook) / occ * V["ST_POP"] * V["GAS_SHARE"] / 1e6
+    r["ds_bench_gwh"] = V["HK_RES_GWH"] / V["HK_POP_2021"] * V["ST_POP"]
     r["emo"] = emo
-    r["emo_cat1_hh"] = sum(emo[k] for k in ("A1", "A2", "A3", "L1", "H1", "H2", "E1", "K1"))
+    r["emo_cat1_hh"] = sum(r["emo_hh"][f"EMO-{n:02d}"] for n in range(1, 11))
     return r
 
 

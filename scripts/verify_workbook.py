@@ -48,8 +48,6 @@ checks = [
     ("Lifestyle total", "Lifestyle_Scope3!F10", m["life_kg"]),
     ("Personal total", "Lifestyle_Scope3!B26", m["personal_total_kg"]),
 ]
-for k, (iid, val) in enumerate(m["emo"].items()):
-    pass
 
 # monthly rows
 for i, mm in enumerate(m["monthly"]):
@@ -58,18 +56,27 @@ for i, mm in enumerate(m["monthly"]):
 # inventory rows
 for k, it in enumerate(m["inventory"]):
     checks.append((f"Inventory {it['id']}", f"Inventory!J{7 + k}", it["hh"]))
-# EMO household share (EMO_Register column H) in register order
-emo_order = ["A1", "A2", "A3", "L1", "H1", "H2", "E1", "K1", "V1", "K2", "K3", "H3", "A4", None, "H4", "A5", "G1", None]
-emo_hh = dict(m["emo"])
-occ = 2
-emo_hh["V1"] = m["emo"]["V1"] * occ / 4
-emo_hh["K2"] = m["emo"]["K2"] * occ / 32
-emo_hh["K3"] = m["emo"]["K3"] * occ / 32
-emo_hh["H3"] = m["emo"]["H3"] * occ / 4
-emo_hh["H4"] = m["emo"]["H4"] * occ / 4
-for k, key in enumerate(emo_order):
-    if key:
-        checks.append((f"EMO row {6 + k} ({key})", f"EMO_Register!H{6 + k}", emo_hh[key]))
+# EMO savings in register order (rows 6-26): facility (G), household share (H), NPV (S)
+for k in range(21):
+    key = f"EMO-{k + 1:02d}"
+    row = 6 + k
+    assert cell(f"EMO_Register!A{row}") == key, (row, cell(f"EMO_Register!A{row}"))
+    checks.append((f"{key} facility kWh", f"EMO_Register!G{row}", m["emo"][key]))
+    checks.append((f"{key} household kWh", f"EMO_Register!H{row}", m["emo_hh"][key]))
+    if key in m["emo_npv"]:
+        checks.append((f"{key} NPV", f"EMO_Register!S{row}", m["emo_npv"][key]))
+checks.append(("Category I household saving", "EMO_Register!C30", m["emo_cat1_hh"]))
+checks += [
+    ("District a (kWh/m2)", "District_Scaling!B11", m["ds_a"]),
+    ("District b (kWh/person)", "District_Scaling!B13", m["ds_b"]),
+    ("District floor area method 1", "District_Scaling!B22", m["ds_area1"]),
+    ("District floor area method 2", "District_Scaling!B30", m["ds_area2"]),
+    ("District per-capita GWh", "District_Scaling!F36", m["ds_pc_gwh"]),
+    ("District per-m2 GWh", "District_Scaling!F37", m["ds_m2_gwh"]),
+    ("District composite GWh", "District_Scaling!F40", m["ds_comp_gwh"]),
+    ("District composite gas-adjusted GWh", "District_Scaling!F42", m["ds_comp_gas_gwh"]),
+    ("District EMSD benchmark GWh", "District_Scaling!F43", m["ds_bench_gwh"]),
+]
 
 bad = 0
 for name, ref, expect in checks:
@@ -78,11 +85,11 @@ for name, ref, expect in checks:
         ref = "Lifestyle_Scope3!F6+F7"
     else:
         got = cell(ref)
-    ok = got is not None and abs(got - expect) <= max(1e-6, abs(expect) * 1e-4)
+    ok = isinstance(got, (int, float)) and abs(got - expect) <= max(1e-6, abs(expect) * 1e-4)
     if not ok:
         bad += 1
     print(f"{'OK ' if ok else 'BAD'} {name:32} {ref:28} excel={got!s:>22} python={expect:,.6f}")
 print(f"\n{len(checks)} checks, {bad} mismatches")
-for chk in ("Inventory!D33", "Monthly!N20", "Monthly!P21"):
+for chk in ("Inventory!D33", "Monthly!N20", "Monthly!P21", "District_Scaling!E58"):
     print("zero-check", chk, cell(chk))
 sys.exit(1 if bad else 0)
