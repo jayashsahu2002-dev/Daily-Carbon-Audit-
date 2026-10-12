@@ -71,7 +71,7 @@ FILL = {
         "L15": AUDIT["audit_start"],
         "L16": f"{AUDIT['audit_start']} - {AUDIT['audit_end']}",
         "L17": f"{AUDIT['auditor']} ({AUDIT['course']})",
-        "L18": "github.com/jayashsahu2002-dev/Daily-Carbon-Audit-",
+        "L18": "N/A",
         "Z14": f"{AUDIT['auditor']} (occupant and auditor) + 1 roommate",
         "Z15": f"{AUDIT['room']}, Hall 13, Lee Shau Kee Student Residence Village",
         "Z16": "Ma On Shan, New Territories",
