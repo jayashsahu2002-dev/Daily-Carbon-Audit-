@@ -15,6 +15,13 @@ from openpyxl import load_workbook
 
 from xls_patch import XlsPatcher, a1
 
+# Part 1 tick-boxes have no linked cell, so they are found by their drawing-object id in the form
+OBJ_TICKS = {
+    ("Part 1(A)", "Tick 'No'"): 124,                    # 5) energy imported from / exported to other buildings
+    ("Part 1(B)(I)", "Tick 'Non-curtain wall'"): 35,     # 4) major type of building facade
+    ("Part 1(B)(I)", "Tick 'Not applicable'"): 12,       # 6) type of central air-conditioning
+}
+
 SRC, WB, OUT = sys.argv[1:4]
 
 wb = load_workbook(WB, data_only=True)
@@ -35,13 +42,12 @@ for r in range(5, ws.max_row + 1):
         d = datetime.datetime.strptime(str(value), "%d/%m/%Y").date()
         p.set_date(sheet, ref, d)
     elif kind == "tick":
-        how, target = ref.split(":")
-        if how == "obj":
-            p.set_checkbox(sheet, int(target), True)
-        else:
-            p.set_checkbox(sheet, p.checkbox_for_link(sheet, target), True)
-            p.set_bool(sheet, target, True)
-            part3_ticks.append(a1(target))
+        if ref == "Tick-box":
+            p.set_checkbox(sheet, OBJ_TICKS[(sheet, value)], True)
+        else:  # tick-box linked to a cell (Part 3): tick it and set the linked cell TRUE
+            p.set_checkbox(sheet, p.checkbox_for_link(sheet, ref), True)
+            p.set_bool(sheet, ref, True)
+            part3_ticks.append(a1(ref))
     elif kind != "none":
         raise ValueError(f"row {r}: unknown entry type {kind!r}")
 

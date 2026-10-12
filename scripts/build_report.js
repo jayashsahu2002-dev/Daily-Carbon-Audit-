@@ -75,22 +75,7 @@ const cover = [
 const front = [
   new Paragraph({ children: runs("Contents", { bold: true, size: 30, color: C.navy }), spacing: { after: 160 } }),
   new TableOfContents("Contents", { hyperlink: true, headingStyleRange: "1-2" }),
-  new Paragraph({ children: runs("After editing the report in Word, right-click the contents list and choose Update Field to refresh the page numbers.", { italics: true, size: 16, color: C.ink2 }), spacing: { before: 120 } }),
   new Paragraph({ children: [new PageBreak()] }),
-  new Paragraph({ children: runs("How this report answers the assignment", { bold: true, size: 26, color: C.navy }), spacing: { after: 120 } }),
-  table(["Assignment requirement", "Where it is answered"], [
-    ["(1) Audit the household with the NELC Home Energy Audit Tool; complete and submit the Excel sheet", "1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx: room, washroom, kitchen and appliance sheets, plus the NELC Survey and NELC Questionnaire tick-boxes. Summary in Appendix E"],
-    ["(2a) Executive Summary using the EE-EAes2018 sheet as reference; only relevant sections; submit the Excel sheet", "Executive summary, EE-EAes tables (Parts 1(A), 1(B)(I), 2 and 3, with the non-applicable CBSI and lift & escalator sections identified); 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls; cell-by-cell entries in Appendix D"],
-    ["(2b) Objective and scope", "Sections 1.2 and 1.3; boundary in Section 3"],
-    ["(2c) Equipment/systems operating characteristics", "Section 5: inventory, ratings, controls and operating schedules, with photographs"],
-    ["(2d) At least five potential EMOs with energy savings and cost-benefit analysis for each", `Section 9: ${nEmo} EMOs, each with baseline, saving, cost, payback, NPV, savings-to-investment ratio and cost of saved energy`],
-    ["Historical energy consumption (recommended); assumed use where bills are unavailable", "Sections 6.1-6.2 (Octopus AC spend since move-in, January-September 2026) and 6.4-6.7"],
-    ["Pictures of appliances (recommended)", "Sections 4, 5 and 8; Appendix B (26 photographs)"],
-    ["(3) Energy per m² and per capita; scale up to the district with Housing Department and other government data", "Sections 10.1-10.3 (Sha Tin District)"],
-    ["(3i) Compare the per-m² and per-capita district results", "Section 10.3"],
-    ["(3ii) Develop a factor linking energy, household floor area and number of residents", "Section 10.4"],
-  ], [3300, TEXT_W - 3300], { size: 16 }),
-  spacer(120),
   new Paragraph({ children: runs("Abbreviations", { bold: true, size: 26, color: C.navy }), spacing: { after: 120 }, keepNext: true }),
   table(["Term", "Meaning"], [
     ["AC", "Air-conditioning / air-conditioner"],
@@ -139,7 +124,7 @@ const exec = [
     ["Sha Tin District scale-up (Section 10)", `${f0(M[0].gwh)} GWh/yr per capita; ${f0(M[1].gwh)} GWh/yr per m²; composite factor ${f0(M[4].gwh)} GWh/yr against an EMSD-based ${f0(M[7].gwh)} GWh/yr`],
   ], [3600, TEXT_W - 3600], { keyCol: 1, size: 16 }),
   H2("Executive summary in the EE-EAes (V.2) structure"),
-  P(`EE-EAes is written for commercial buildings audited under Cap. 610. Only the sections that describe a household are completed here and in the submitted form. Items about central building services installations (CBSI) and lifts and escalators cannot exist inside a household boundary, so they are marked N/A, as the form instructs (see the last table in this group). The values come from the calculation workbook and were entered into the official macro-enabled form, whose macros and tick-boxes are preserved.`),
+  P(`EE-EAes is written for commercial buildings audited under Cap. 610. Only the sections that describe a household are completed here and in the submitted form. Items about central building services installations (CBSI) and lifts and escalators cannot exist inside a household boundary, so they are marked N/A, as the form instructs (see the last table in this group). The same entries were made in the submitted EE-EAes form.`),
   tableCaption(`${T("ES")}: EE-EAes Part 1(A) - Administrative information (EAC §8.1(m))`),
   table(["Form item", "Entry", "Note"], [
     ["Name of building", `${A.room}, ${A.building} (household energy audit)`, "Audited unit = the household's room"],
@@ -176,7 +161,7 @@ const exec = [
   tableCaption(`${T("ES")}: EE-EAes Part 2 item 5 - Monthly EUI of the past 1st 12-month period (MJ/m²/month)`),
   table(monthsRef.map((m, i) => `${i + 1}: ${m}`), [monthsRef.map((m) => f2(mEui(m)))], [788, ...Array(11).fill(784)], { size: 14, align: Array(12).fill("C") }),
   tableCaption(`${T("ES")}: EE-EAes Part 3 - Energy Management Opportunities entered in the form (EAC §8.1(l)(i))`),
-  table(["Slot", "Ref", "Cat.", "Type", "Energy Management Opportunity", "kWh/yr saved*", "Payback"], formEmos.map((ref, i) => {
+  table(["Item", "Ref", "Cat.", "Type", "Energy Management Opportunity", "kWh/yr saved*", "Payback"], formEmos.map((ref, i) => {
     const e = emo(ref);
     const pb = e.cost ? (num(e.payback) && e.payback > 0 ? `${f1(e.payback)} yr` : "-") : (e.fac_kwh ? "Immediate" : "-");
     return [String.fromCharCode(65 + i), ref, e.cat, e.type, e.desc, e.fac_kwh ? f0(e.fac_kwh) : "-", pb];
@@ -191,12 +176,12 @@ const exec = [
   ], [2700, 3300, 3412], { size: 16 }),
   P("**Main findings**", { after: 60, before: 120, keepNext: true }),
   ...bullets([
-    `**Operation, not equipment, drives use.** The room AC (Midea MW-12CRF8E) and the kitchen appliances already carry Grade 1 HK Energy Labels. Energy is driven by all-night AC operation at 25 °C, AC use in the cool months, a washroom exhaust fan that runs 24 hours a day and a kitchen AC that residents leave on for 8 h or more.`,
-    `**More than half of the "home" is outside the room.** ${pc(K.shared_pct)} of the household's electricity is used in shared facilities that students do not control, chiefly shower water heating (24.4 kW instantaneous heater), the washroom fan and the kitchen.`,
-    `**Hot water is seasonal.** Shower energy is ${f2(K.hw_jan_jul)} times higher in January than in July because the cold-water inlet falls from about 29 °C to 16.5 °C [8].`,
-    `**Lighting is already efficient.** It is all-LED, and the room's lighting power density of ${f1(K.lpd)} W/m² is within the BEC 2021 dormitory limit of ${f1(K.bec_lpd)} W/m² [24].`,
-    `**The emission factor doubles the answer.** Scope 2 is ${pc(K.s2_share)} of the inventory; the CLP factor (0.34) and the territory default (0.7) differ by a factor of two, so both are reported [2], [5].`,
-    `**District scale-up needs both floor area and residents.** Scaled per person, the audit implies ${f0(M[0].gwh)} GWh/yr for Sha Tin; scaled per m², ${f0(M[1].gwh)} GWh/yr. The ${f2(DS.ratio_m2_pc)}× gap equals the ratio of floor area per person (${f1(DS.s_district)} vs ${f1(DS.s_audit)} m²). A composite factor of ${f1(DS.a)} kWh per m² plus ${f0(DS.b)} kWh per resident gives ${f0(M[4].gwh)} GWh/yr, within ${pc(Math.abs(M[4].vs_bench), 0)} of an EMSD-based benchmark.`,
+    `The room AC (Midea MW-12CRF8E) and the kitchen appliances already carry Grade 1 HK Energy Labels, so most of the energy use comes from how they are operated: all-night AC at 25 °C, AC use in the cool months, a washroom exhaust fan that runs 24 hours a day and a kitchen AC that residents leave on for 8 h or more.`,
+    `${pc(K.shared_pct)} of the household's electricity is used outside the room, in shared facilities that students do not control: mainly shower water heating (24.4 kW instantaneous heater), the washroom fan and the kitchen.`,
+    `Shower energy is ${f2(K.hw_jan_jul)} times higher in January than in July because the cold-water inlet falls from about 29 °C to 16.5 °C [8].`,
+    `Lighting is all-LED, and the room's lighting power density of ${f1(K.lpd)} W/m² is within the BEC 2021 dormitory limit of ${f1(K.bec_lpd)} W/m² [24].`,
+    `Scope 2 is ${pc(K.s2_share)} of the inventory, so the emission factor matters a lot: the CLP factor (0.34) and the territory default (0.7) differ by a factor of two, and both are reported [2], [5].`,
+    `Scaled per person, the audit implies ${f0(M[0].gwh)} GWh/yr for Sha Tin; scaled per m², ${f0(M[1].gwh)} GWh/yr. The ${f2(DS.ratio_m2_pc)}× gap is the ratio of floor area per person (${f1(DS.s_district)} vs ${f1(DS.s_audit)} m²). A composite factor of ${f1(DS.a)} kWh per m² plus ${f0(DS.b)} kWh per resident gives ${f0(M[4].gwh)} GWh/yr, within ${pc(Math.abs(M[4].vs_bench), 0)} of an EMSD-based benchmark.`,
   ]),
   P("**Recommendations**", { after: 60, before: 60, keepNext: true }),
   ...bullets([
@@ -215,7 +200,7 @@ Together they save about ${f0(catI.hh_kwh)} kWh/yr (${pc(catI.pct)}).`,
 const intro = [
   H1("1  Introduction, objective and scope"),
   H2("1.1  Background"),
-  P(`Buildings account for about 90% of Hong Kong's electricity consumption [30]. Electricity generation produced 61% of the territory's greenhouse-gas emissions in 2023, when per-capita emissions were about ${f2(K.in_BM_HK_T)} t CO2e [10]. Hong Kong's Climate Action Plan 2050 targets carbon neutrality before 2050 and aims to cut electricity use in residential buildings by 20-30% from 2015 levels by 2050 [31]. A home is small enough to inventory completely, yet it already raises the problems of a corporate audit: boundaries, shared services, missing meters and the choice of emission factors. The best way to learn carbon auditing is to perform one, and an energy audit is its foundation.`),
+  P(`Buildings account for about 90% of Hong Kong's electricity consumption [30]. Electricity generation produced 61% of the territory's greenhouse-gas emissions in 2023, when per-capita emissions were about ${f2(K.in_BM_HK_T)} t CO2e [10]. Hong Kong's Climate Action Plan 2050 targets carbon neutrality before 2050 and aims to cut electricity use in residential buildings by 20-30% from 2015 levels by 2050 [31]. Auditing a home is useful practice for the corporate carbon audit later in the course, because even one room raises the same questions: where to draw the boundary, how to share out common services, what to do without meters and which emission factors to use.`),
   H2("1.2  Objective"),
   P("The purpose of this audit is to determine the household's own energy consumption profile and identify ways to reduce its energy bills and emissions. The specific objectives are to:", { after: 40 }),
   ...numbered([
@@ -277,18 +262,18 @@ const method = [
     ["3 Identify EMOs (§7.4)", "Evaluate AC, LPD, EUI; maintenance, set-points, behaviour, schedules", "Benchmarks (EUI, LPD, water, per-capita use); 13 walk-through findings (Section 8)"],
     ["4 Cost-benefit (§7.5)", "Savings, costs, service life, degradation, energy price", "HK$1.406/kWh; indicative costs; simple payback, NPV, SIR and cost of saved energy over the service life with 1%/yr degradation"],
     ["5 Recommendations (§7.6)", "Implementation, M&V, further studies", "Action plan, metering plan and memo to hall management (Section 11)"],
-    ["6 Report (§7.7, §8)", "Report and executive summary", "This report; EE-EAes form; completed NELC tool; calculation workbook (live formulas)"],
+    ["6 Report (§7.7, §8)", "Report and executive summary", "This report; EE-EAes form; completed NELC tool; calculation workbook"],
   ], [2300, 2900, 4212], { size: 16 }),
   H2("2.2  Calculation methods"),
   noteBox([
     "**(1) Appliance energy:** E = P × LF × h × d × n ÷ 1000 (kWh/yr). P is rated power (W), LF the load factor, h hours per day, d days per year and n the quantity.",
     "**(2) AC, top-down:** E = Σ (monthly Octopus spend) ÷ tariff. The spend is HK$140 in May-Oct and HK$50 in Nov-Apr; the tariff is HK$1.406/kWh (CLP 2026 average net tariff) [6].",
     "**(3) AC, bottom-up:** E = (label kWh ÷ 1,200 h) × Σ operating hours. The HK label states annual consumption for 1,200 h of operation [9].",
-    "**(4) Shower water heating:** E = V × cₚ × (T_shower − T_inlet) ÷ (3,600 × η). V is litres (1 L = 1 kg) and cₚ = 4.186 kJ/kg·K; T_inlet is the HKO monthly mean air temperature.",
+    "**(4) Shower water heating:** E = V × cp × (T_shower - T_inlet) ÷ (3,600 × η). V is litres (1 L = 1 kg) and cp = 4.186 kJ/kg·K; T_inlet is the HKO monthly mean air temperature.",
     "**(5) Allocation:** E_household = Σ E_item × share. Room items count at 1; washroom fixed loads at 2/4; kitchen fixed loads at 2/32; showers, cooking and laundry at the household's own use.",
     "**(6) Energy Utilisation Index:** EUI = E × 3.6 ÷ A (MJ/m²/yr) [1], [3].",
     "**(7) GHG emissions:** activity × emission factor. Scope 2 uses both 0.34 (CLP 2025) [5] and 0.7 kg CO2e/kWh [2]. Water and sewage use the utility's kWh per m³ × 0.7 (Guideline Tables 8 and 9) [2], [11], [12].",
-    `**(8) Cost-benefit:** simple payback = cost ÷ annual saving; NPV = S × [1 − ((1 − d)/(1 + r))^L] ÷ (r + d) − cost, with r = ${pc(K.in_DISC_RATE, 0)} real and d = ${pc(K.in_DEGRADE, 0)}/yr degradation of savings over the service life L (EAC §7.5.4); SIR = present value of savings ÷ cost; cost of saved energy = cost × r/(1 − (1 + r)^−L) ÷ annual kWh.`,
+    `**(8) Cost-benefit:** simple payback = cost ÷ annual saving; NPV = S × [1 - ((1 - d)/(1 + r))^L] ÷ (r + d) - cost, with r = ${pc(K.in_DISC_RATE, 0)} real and d = ${pc(K.in_DEGRADE, 0)}/yr degradation of savings over the service life L (EAC §7.5.4); SIR = present value of savings ÷ cost; cost of saved energy = cost × r/(1 - (1 + r)^-L) ÷ annual kWh.`,
     "**(9) District scale-up:** district energy = factor × population, × floor area, or (composite) a × floor area + b × residents (Section 10).",
   ], "F2F6FB"),
   H2("2.3  Data sources and data quality"),
@@ -303,9 +288,9 @@ const method = [
   P(`Assumed values are highlighted in yellow in the workbook and tested in the sensitivity analysis (Section 12). The most influential assumption is the Octopus AC tariff: CityU does not publish its hall AC rate, so the CLP average tariff is used and cross-checked against comparable university hostels (HK$1.20-2.31/kWh [25]).`),
   H2("2.4  Tools and deliverables"),
   ...bullets([
-    `**Home_Energy_Carbon_Audit_Workbook.xlsx** - ${D.wb_stats.sheets} sheets with ${f0(D.wb_stats.formulas)} live formulas: inputs, AC baseline, hot water, inventory, monthly profile, breakdown, GHG inventory, EMO register with life-cycle costing, sensitivity, district scale-up and the EE-EAes entries.`,
-    "**1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx** - the course's NELC tool completed for the room, washroom, kitchen and laundry, including the NELC Survey and Questionnaire tick-boxes, with all navigation buttons and drop-downs preserved.",
-    "**2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls** - the official EMSD form with the relevant sections completed; its macros, tick-boxes and protected layout are unchanged.",
+    `**Home_Energy_Carbon_Audit_Workbook.xlsx** - the calculation workbook: inputs, AC baseline, hot water, inventory, monthly profile, breakdown, GHG inventory, EMO register with life-cycle costing, sensitivity, district scale-up and the EE-EAes entries.`,
+    "**1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx** - the course's NELC tool completed for the room, washroom, kitchen and laundry, including the NELC Survey and Questionnaire sheets.",
+    "**2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls** - the EMSD executive-summary form with the relevant sections completed (macros must be enabled for the sheets to show).",
   ]),
 ];
 
@@ -572,7 +557,7 @@ Water use is well below average (${f1(K.water_lpd)} vs ${f1(K.bm_water)} L/perso
   H2("6.8  Energy used outside the room (EAC §8.1(h))"),
   P(`EAC §8.1(h) asks how much energy central services supply to the building's units. The equivalent here is the share of household energy used in shared facilities: **${pc(K.shared_pct)}**, or ${f0(K.shared_kwh)} kWh/yr. It splits into the washroom (${f0(K.wr_kwh)} kWh), the kitchen (${f0(K.kit_kwh)} kWh) and the laundry (${f0(K.lau_kwh)} kWh).
 
-This is the most important structural finding of the audit. A resident who changed only in-room habits could reach less than half of the household's footprint. EAC §7.4.3 allows EMOs that depend on other responsible persons to be recorded and conveyed to them for follow-up [1]. Here the roles are reversed: the audited unit is the room, and the person responsible for the shared services is the hall management. Many EMOs therefore have to be conveyed to the hall management.`),
+This affects the choice of EMOs: changing habits inside the room can only touch less than half of the household's energy. EAC §7.4.3 allows EMOs that depend on other responsible persons to be recorded and passed to them for follow-up [1]. Here the shared services are run by the hall management, so several EMOs are addressed to them (Section 11.3).`),
 ];
 
 // ======================================================================================== 7 CARBON
@@ -637,9 +622,7 @@ Reporting both, as required, makes the results comparable with older Hong Kong b
     D.flights.map((f) => [f.leg, f0(f.gcd), f.haul, f0(f.km), Number(f.ef).toFixed(5), f0(f.kg)]),
     [3012, 1300, 1100, 1500, 1300, 1200], { size: 16, align: ["L", "R", "L", "R", "R", "R"] }),
   ...figure(...fig("personal"), `${F(7)}: The auditor's annual footprint: home energy is a small part`),
-  P(`The auditor's total is about **${f1(K.personal_kg / 1000)} t CO2e/yr**, ${f2(K.personal_ratio)} × Hong Kong's per-capita figure of ${f2(K.in_BM_HK_T)} t [10]. That figure is a territorial inventory, which excludes international aviation and the emissions embodied in imported food, so the comparison is indicative only. The key insight is proportion:
-- diet (${pc(D.personal.find((p) => p.name === "Diet").pct, 0)}) and flights (${pc(D.personal.find((p) => p.name === "Flights").pct, 0)}) outweigh the home's energy and water (${pc(K.home_share_personal, 0)});
-- the same pattern of Scope 3 dominance is typical of corporate footprints.`),
+  P(`The auditor's total is about **${f1(K.personal_kg / 1000)} t CO2e/yr**, ${f2(K.personal_ratio)} × Hong Kong's per-capita figure of ${f2(K.in_BM_HK_T)} t [10]. That figure is a territorial inventory, which excludes international aviation and the emissions embodied in imported food, so the comparison is indicative only. Diet (${pc(D.personal.find((p) => p.name === "Diet").pct, 0)}) and flights (${pc(D.personal.find((p) => p.name === "Flights").pct, 0)}) are much larger than the home's energy and water (${pc(K.home_share_personal, 0)}). Company footprints often look similar, with Scope 3 larger than Scopes 1 and 2.`),
 ];
 
 // ======================================================================================== 8 FINDINGS
@@ -736,20 +719,20 @@ const CALC = {
   "EMO-03": `${f1(K.ac_td)} kWh × 5%`,
   "EMO-04": `Dec ${f1(acM("Dec"))} + Jan ${f1(acM("Jan"))} + Feb ${f1(acM("Feb"))} kWh of room-AC energy`,
   "EMO-05": `2 × ${K.in_CEIL_W} W × 3 h/day × 365 days ÷ 1000`,
-  "EMO-06": `${f1(K.hw_kwh)} kWh × (1 − 4/5)`,
+  "EMO-06": `${f1(K.hw_kwh)} kWh × (1 - 4/5)`,
   "EMO-07": `${f1(K.hw_kwh)} kWh × 2 K ÷ ${f2(K.hw_avg_dt)} K`,
   "EMO-08": `${f1(lapKwh)} kWh × 15%`,
   "EMO-09": `${f1(cookKwh)} kWh × 20%`,
   "EMO-10": `${f1(dryKwh)} kWh (2 × 12 min × 3 kW × 52 weeks) × ${pc(K.in_DRYER_DISPLACE, 0)}`,
-  "EMO-11": `${K.in_WR_FAN_W} W × (24 − 8) h × 365 days ÷ 1000 per washroom; household share 2/4`,
-  "EMO-12": `0.573 kW × [(8 − 5) h × ${K.in_DAYS_HOT} d + (4 − 2) h × ${K.in_DAYS_COOL} d] per kitchen; household share 2/32`,
+  "EMO-11": `${K.in_WR_FAN_W} W × (24 - 8) h × 365 days ÷ 1000 per washroom; household share 2/4`,
+  "EMO-12": `0.573 kW × [(8 - 5) h × ${K.in_DAYS_HOT} d + (4 - 2) h × ${K.in_DAYS_COOL} d] per kitchen; household share 2/32`,
   "EMO-13": `${K.in_DISP_KWH_DAY} kWh/day × 365 × 25% per kitchen; household share 2/32`,
-  "EMO-14": `4 users × ${f1(hwPP)} kWh × (1 − 7/9) per washroom; household share 2/4`,
-  "EMO-15": `${K.in_KLIGHT_N} × ${K.in_KLIGHT_W} W × (${K.in_KLIGHT_H} − ${K.in_KLIGHT_SENSOR_H}) h × 365 d ÷ 1000 per kitchen; household share 2/32`,
+  "EMO-14": `4 users × ${f1(hwPP)} kWh × (1 - 7/9) per washroom; household share 2/4`,
+  "EMO-15": `${K.in_KLIGHT_N} × ${K.in_KLIGHT_W} W × (${K.in_KLIGHT_H} - ${K.in_KLIGHT_SENSOR_H}) h × 365 d ÷ 1000 per kitchen; household share 2/32`,
   "EMO-16": `${f1(K.ac_td)} kWh × 3%`,
   "EMO-17": null,
-  "EMO-18": `4 users × ${f1(hwPP)} kWh × (1 − ${K.in_HEATER_EFF}/3.5) per washroom; household share 2/4`,
-  "EMO-19": `${f1(K.ac_td)} kWh × (1 − ${f2(K.in_AC_CSPF)}/7.5)`,
+  "EMO-18": `4 users × ${f1(hwPP)} kWh × (1 - ${K.in_HEATER_EFF}/3.5) per washroom; household share 2/4`,
+  "EMO-19": `${f1(K.ac_td)} kWh × (1 - ${f2(K.in_AC_CSPF)}/7.5)`,
   "EMO-20": `${f1(K.ac_td)} kWh × 2%`,
   "EMO-21": null,
 };
@@ -785,7 +768,7 @@ Savings are priced at HK$${K.in_TARIFF}/kWh and converted to CO2e with the CLP 2
 - the net present value (NPV);
 - the savings-to-investment ratio (SIR, above 1 = worthwhile);
 - the cost of saved energy (CSE), compared with the tariff.`),
-  P(`Three EMOs go beyond the usual checklist. EMO-04 recognises that a Hong Kong winter needs no mechanical cooling. EMO-10 replaces the tumble dryer with Hong Kong's traditional air-drying. EMO-15 extends the washroom's sensor control to the kitchen. The register also separates what the occupants can do (Category I) from what only the hall can do, because more than half of the household's energy is used in shared facilities.`),
+  P(`Some EMOs come from local conditions rather than a standard checklist: EMO-04 uses the fact that a Hong Kong winter needs no mechanical cooling, EMO-10 replaces the tumble dryer with air-drying, and EMO-15 copies the washroom's sensor control to the kitchen. The register also separates what the occupants can do themselves (Category I) from what only the hall can do, since more than half of the household's energy is used in shared facilities.`),
   tableCaption(`${T(9)}: EMO register (household share of savings)`),
   table(["Ref", "Cat.", "Type", "Energy Management Opportunity", "kWh/yr", "HK$/yr", "Cost HK$", "Payback (yr)", "kg CO2e/yr"], emoTab,
     [760, 500, 640, 3220, 760, 760, 800, 1000, 972], { size: 14, align: ["L", "C", "C", "L", "R", "R", "R", "R", "R"] }),
@@ -797,7 +780,7 @@ Savings are priced at HK$${K.in_TARIFF}/kWh and converted to CO2e with the CLP 2
   ...figure(...fig("cse"), `${F(9)}: Cost of saved energy of the EMOs with a capital cost, against the electricity tariff`),
   H2("9.1  Category I - housekeeping (no cost)"),
   ...D.emos.filter((e) => e.cat === "I").map(emoDetail),
-  P(`**The Category I package saves about ${f0(catI.hh_kwh)} kWh/yr (${pc(catI.pct)} of household electricity) and ${f0(catI.kg)} kg CO2e/yr at no cost.** The AC measures (EMO-01 to EMO-04) cut the occupants' own Octopus spend by about HK$${f0(acCatI * K.in_TARIFF)} a year, ${pc((acCatI * K.in_TARIFF) / K.ac_spend, 0)} of it. The other Category I measures mainly reduce energy paid for by the hall: a classic split incentive.`),
+  P(`**The Category I package saves about ${f0(catI.hh_kwh)} kWh/yr (${pc(catI.pct)} of household electricity) and ${f0(catI.kg)} kg CO2e/yr at no cost.** The AC measures (EMO-01 to EMO-04) cut the occupants' own Octopus spend by about HK$${f0(acCatI * K.in_TARIFF)} a year, ${pc((acCatI * K.in_TARIFF) / K.ac_spend, 0)} of it. The other Category I measures mainly reduce energy that the hall pays for, so the occupants see no direct saving from them (a split incentive).`),
   H2("9.2  Category II - low-cost operational changes"),
   ...D.emos.filter((e) => e.cat === "II").map(emoDetail),
   H2("9.3  Category III - capital measures and cost-benefit with service life (EAC §7.5.4)"),
@@ -838,7 +821,7 @@ The two estimates agree within ${pc(Math.abs(DS.area_diff), 0)}.`),
     ["Domestic households, 2025", f0(DS.hh), "households", "C&SD [33]"],
     ["Average household size", f1(DS.ahs), "persons", "C&SD [33]"],
     ["Method 1: domestic floor area (population × 16.0 m²)", f0(DS.area1), "m²", "Census median [23]"],
-    ["Public rental households (Housing Authority) × 14.1 m² × 2.6 persons", `${f0(DS.prh_hh)} → ${f0(DS.prh_area)} m²`, "", "Housing Department [34], [35]"],
+    ["Public rental households (Housing Authority) × 14.1 m² × 2.6 persons", `${f0(DS.prh_hh)} households = ${f0(DS.prh_area)} m²`, "", "Housing Department [34], [35]"],
     ["Subsidised-sale households (37.2% of the rest) × 35 m²", f0(DS.ssf_area), "m²", "[36], [37]"],
     ["Private households × 47 m²", f0(DS.priv_area), "m²", "[36], [37]"],
     ["Method 2: domestic floor area by housing type", f0(DS.area2), "m²", `${DS.area_diff >= 0 ? "+" : ""}${pc(DS.area_diff)} vs method 1`],
@@ -896,14 +879,14 @@ const recs = [
     ["Laptop and fan energy", "Plug-in power meter", "2 weeks each", "Per hour of use"],
     ["Shower flow and time", "Bucket test (L/min) and phone timer", "Once; then a weekly sample", "Inlet temperature by month (HKO)"],
     ["Kitchen AC, lights and exhaust fan hours", "Run-hour log or smart-plug data (hall)", "Continuous for 1 month", "Occupancy (users per day)"],
-    ["Baseline record", "This workbook (Inputs, AC_Baseline, Monthly)", "Kept with the report", "Re-run with measured values"],
+    ["Baseline record", "Calculation workbook (Inputs, AC_Baseline and Monthly sheets)", "Kept with the report", "Re-run with measured values"],
   ], [2000, 2912, 2500, 2000], { size: 15 }),
   H2("11.3  Communication with hall management (EAC §7.4.3)"),
   P(`More than half of the household's energy is used in shared facilities, so the most effective EMOs depend on the Student Residence Office. A short memo should be sent to the SRO. It should:
 - summarise findings F1, F3-F5, F7, F9 and F10;
 - quantify the facility-level savings of EMO-11 to EMO-15 (about ${f0(hallII_fac)} kWh/yr per washroom and kitchen, NPV positive for each) and recommend the coil clean (EMO-16) on hygiene grounds;
 - suggest piloting them on one floor, with before-and-after readings from the building management system.
-This mirrors a corporate audit, where landlord-controlled central services are reported to the responsible persons for follow-up.`),
+A corporate audit would deal with landlord-controlled central services in the same way.`),
   H2("11.4  Further studies (EAC §7.6.5)"),
   ...bullets([
     "Obtain CityU's actual Octopus AC tariff (HK$/kWh) to replace the CLP-average proxy. This is the largest single uncertainty.",
@@ -936,7 +919,7 @@ Combining the main independent uncertainties by root-sum-square gives about **±
     "The label-based AC estimate uses the HK test-condition average, not this room's measured load; cold-water inlet temperature is taken as the monthly mean air temperature.",
     "EMO costs are indicative, and life-cycle results depend on the assumed 4% discount rate and 1%/yr degradation.",
     "The Guidelines (2010) are dated; current factors were substituted, using the Guidelines' methods. Daily-activity factors (DESNZ, Scarborough) are not Hong Kong-specific.",
-    "District data were taken from official publications as reported in search extracts of those publications; the figures should be checked against the source tables before reuse.",
+    "The district figures come from different publications and years (C&SD 2025, Housing Authority 2025-2026, 2016 By-census and 2021 Census), so they are not fully consistent with each other.",
   ]),
 ];
 
@@ -948,20 +931,21 @@ const concl = [
     `The household uses about **${f0(K.hh_kwh)} kWh/yr** of electricity: ${f0(K.pp_kwh)} kWh per person, and a room EUI of ${f1(K.room_eui_mj)} MJ/m²/yr. This emits **${f0(K.tot_clp)} kg CO2e/yr** on CLP's 2025 factor, or ${f0(K.tot_def)} kg on the 0.7 default. Since move-in (January-September 2026) it has used about ${f0(D.hist.N)} kWh.`,
     `Air-conditioning (${pc(acEnduse.pct)}) and shower hot water (${pc(hw.pct)}) dominate. Their seasonality runs in opposite directions, which flattens the monthly profile.`,
     "The equipment is already efficient (Grade-1 labels, LED lighting). The savings lie in operation: set-points, schedules, run-hours of shared plant, and shower and laundry habits.",
-    `${pc(K.shared_pct)} of the household's energy is used in shared facilities, so the hall management is an essential partner.`,
+    `${pc(K.shared_pct)} of the household's energy is used in shared facilities, so the larger savings need the hall management's help.`,
     `No-cost Category I measures save about ${pc(catI.pct)}. The five main Category II measures at hall level (EMO-11 to EMO-15) pay back in ${f1(Math.min(...hallII_pb))}-${f1(Math.max(...hallII_pb))} years with positive NPV. Replacing the AC is not viable.`,
     `Scaled to Sha Tin, per-capita and per-m² factors give ${f0(M[0].gwh)} and ${f0(M[1].gwh)} GWh/yr. A composite factor (a = ${f1(DS.a)} kWh/m², b = ${f0(DS.b)} kWh/person) gives ${f0(M[4].gwh)} GWh/yr, close to the EMSD-based ${f0(M[7].gwh)} GWh/yr.`,
   ]),
   H2("13.2  Lessons for the corporate carbon audit"),
+  P("Doing this audit showed me several things that will matter for the corporate carbon audit:", { after: 60 }),
   ...numbered([
-    "**Set the boundary deliberately.** In a hostel, as in a multi-tenant office, the energy a user causes sits partly in landlord-controlled central services. Organisational and operational boundaries, and the allocation rules between them, must be decided and documented before any data is collected.",
-    "**Build a data hierarchy and fill gaps transparently.** Metered data, then nameplate ratings, then reported behaviour, then published values, then assumptions. Each value is tagged and stress-tested.",
-    "**Triangulate.** Two independent estimates (financial and engineering) that agree within about 10% give far more confidence than one.",
-    "**Report emission factors explicitly.** Hong Kong's Guidelines require both the territory default and the utility-specific factor; the choice alone changes the answer by a factor of two.",
-    "**Normalise with more than one driver.** Energy per m² or per person alone misleads when occupancy density differs; a two-driver factor transfers between sites far better, as corporate benchmarking also finds.",
-    "**Expect Scope 3 to dominate.** Travel and food far exceeded the home's energy, as purchased goods and business travel typically do in corporate footprints.",
-    "**Behaviour and governance beat hardware.** Split incentives (who pays versus who decides) shaped the EMO list as much as engineering did.",
-    "**Plan M&V from day one.** Without metering points, savings cannot be verified (EAC §7.5-7.6).",
+    "The boundary has to be decided first. In a hostel, as in a multi-tenant office, part of the energy a user causes is in central services run by someone else, so the allocation rules need to be written down before collecting data.",
+    "With almost no meters, I had to rank the data by reliability (metered, nameplate, reported, published, assumed) and label every value, so that the weak assumptions could be tested afterwards.",
+    "Checking the AC energy in two independent ways (Octopus spend and the energy label) and getting within about 10% gave me much more confidence than either estimate alone.",
+    "The emission factor has to be stated clearly. The Hong Kong Guidelines ask for both the default and the utility factor, and here they differ by a factor of two.",
+    "Energy per m² and energy per person gave very different district totals. Using floor area and residents together worked much better, and the same issue will come up when comparing offices with different occupancy densities.",
+    "Travel and food were much bigger than the home's energy, which is similar to company footprints where purchased goods and business travel are often the largest items.",
+    "Many of the savings depend on who pays and who decides rather than on the equipment, so talking to the hall management matters as much as the calculations.",
+    "Metering should be planned at the start. Without it, savings cannot be verified (EAC §7.5-7.6).",
   ], "numbers2"),
 ];
 
@@ -998,13 +982,13 @@ const qa = [
   ["L42-L45 Daily activity", "MTR 18 km × 2 × 6/week; 3 trips/month of 22 km × 2; canteen 7 + self-cooked 7 meals/week, mixed diet; 4 flights: HK-Delhi, Delhi-HK, Delhi-Goa, Goa-HK"],
   ["M46-M48 Observations", "Kitchen AC on 8 h+ (Toshiba RAS-24J2KCV-HK, 688 kWh/1,200 h, 7.00 kW, R410A); no changes allowed in the room; budget HK$200"],
 ];
-const formRows = D.form_entries.filter((r) => r.kind !== "none").map((r) => [r.sheet, r.cell.replace("obj:", "tick-box ").replace("link:", "tick-box linked to "), r.field, String(r.value).slice(0, 260)]);
+const formRows = D.form_entries.filter((r) => r.kind !== "none").map((r) => [r.sheet, r.kind === "tick" && r.cell !== "Tick-box" ? `Tick-box (${r.cell})` : r.cell, r.field, String(r.value).slice(0, 260)]);
 const appendices = [
   H1("Appendix A - Questionnaire responses (summary)"),
-  P("The full answers are in audit-inputs/QUESTIONNAIRE.md in the project repository.", { after: 80 }),
+  P("Summary of the occupant questionnaire completed for the room before the walk-through.", { after: 80 }),
   table(["Question", "Response"], qa, [2600, TEXT_W - 2600], { size: 15 }),
   H1("Appendix B - Photo log"),
-  P(`${D.photo_log.length} photographs were taken during the audit and are stored in the photos/ folder. Each was used to read a rating or label, or to evidence a finding.`, { after: 80 }),
+  P(`${D.photo_log.length} photographs were taken during the audit. Each was used to read a rating or label, or as evidence for a finding.`, { after: 80 }),
   table(["Ref", "File", "What it shows", "Data extracted"], D.photo_log.map((p) => [p.ref, p.file, p.what, p.data]), [600, 2900, 3600, 2312], { size: 14 }),
   spacer(80),
   photoFigure([
@@ -1026,13 +1010,10 @@ const appendices = [
   table(["Parameter", "Value", "Unit", "Quality", "Src"], D.inputs.map((r) => [r.label, String(r.value), r.unit, r.quality, r.source ? `[${Number(r.source.slice(1))}]` : ""]),
     [4300, 1000, 1612, 1600, 900], { size: 14, align: ["L", "R", "L", "L", "C"] }),
   H1("Appendix D - EE-EAes (V.2) form entries"),
-  P(`The submitted file 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls is the official EMSD form with the entries below. The form is a macro-enabled workbook: its sheets are hidden until it is opened in Excel with macros enabled, and its macros re-hide them when it is saved. The entries were therefore written directly into the form's cells and tick-boxes, so the macros, tick-box behaviour, protection and layout remain exactly as issued. The form's own summary cells were updated to match:
-- total energy (Part 2 item 3) and EUI (item 4);
-- the Part 3 category and type counts.
-CBSI and lift & escalator items are marked N/A or left blank, as explained in the Executive Summary.`),
+  P(`The submitted file 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls contains the entries below. The form's sheets only appear when it is opened in Excel with macros enabled. Total energy and EUI (Part 2 items 3 and 4) and the Part 3 category and type counts are calculated by the form itself. CBSI and lift & escalator items are marked N/A or left blank, as explained in the Executive Summary.`),
   table(["Form sheet", "Cell / control", "Field", "Value entered"], formRows, [1300, 1300, 2900, 3912], { size: 13 }),
   H1("Appendix E - Completed NELC Home Energy Audit Tool"),
-  P(`A copy of the course tool (1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx) was completed. The values were written directly into the tool's input cells, tick-boxes and answer boxes, so its navigation buttons, logo, drop-down lists and formulas are unchanged and the original file is untouched. The tool uses US units, so the following conversions were applied:
+  P(`A copy of the course tool (1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx) was completed for the room, the shared washroom and kitchen, and the laundry. The tool uses US units, so the following conversions were applied:
 - 15 m² = 161 ft²;
 - 25 °C = 77 °F;
 - 24.4 kW = 83,256 Btu/h;
@@ -1050,19 +1031,6 @@ CBSI and lift & escalator items are marked N/A or left blank, as explained in th
     ["Appliance Dataplate Info", "10 appliances with manufacturer, model, year and key ratings"],
     ["Other Appliances", "Laptops and phone chargers with use and wattage"],
   ], [2400, TEXT_W - 2400], { size: 15 }),
-  P("Answers on attitudes and satisfaction in the Survey sheet reflect the auditor's questionnaire and behaviour and should be reviewed by the auditor before submission.", { size: 16, italics: true }),
-  H1("Appendix F - Deliverables and reproducibility"),
-  table(["File", "Purpose"], [
-    ["deliverables/Home_Energy_Carbon_Audit_Report.docx (and .pdf)", "This report"],
-    ["deliverables/1_SEE6115-8115_Home Energy Audit Tool_COMPLETED.xlsx", "Assignment part (1): completed NELC Home Energy Audit Tool"],
-    ["deliverables/2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls", "Assignment part (2a): completed EMSD EE-EAes executive-summary form (open in Excel with macros enabled)"],
-    ["deliverables/Home_Energy_Carbon_Audit_Workbook.xlsx", `Calculation workbook - ${D.wb_stats.sheets} sheets, ${f0(D.wb_stats.formulas)} live formulas, no formula errors`],
-    ["deliverables/figures/", `The ${Object.keys(D.figs).length} charts used in this report`],
-    ["photos/", "26 evidence photographs"],
-    ["audit-inputs/QUESTIONNAIRE.md", "Completed questionnaire"],
-    ["scripts/", "Python/Node scripts that rebuild the workbook, verify it against an independent model, fill both course forms and generate this report"],
-  ], [4600, TEXT_W - 4600], { size: 15 }),
-  P("Rebuild sequence: build_workbook.py, then recalculation, then verify_workbook.py, then fill_home_audit_tool.py and fill_eeaes_form.py, then make_report_assets.py, then build_report.js, then finalize_report.py (contents page numbers and PDF copy). Every number in this report is read from the recalculated workbook.", { before: 120, size: 17 }),
 ];
 
 // ======================================================================================== DOCUMENT
@@ -1072,9 +1040,9 @@ const page = { size: { width: 11906, height: 16838 }, margin: { top: 1134, botto
 
 const doc = new Document({
   creator: A.auditor,
+  lastModifiedBy: A.auditor,
   title: "Home Energy Audit [2] - Energy Audit Report of Room 1003B, Hall 13, CityU",
   description: "Home energy and carbon audit following EMSD EAC 2018, EE-EAes and the HK GHG Guidelines for Buildings, with a Sha Tin District scale-up",
-  features: { updateFields: true },
   styles: H.STYLES,
   numbering: H.NUMBERING,
   sections: [

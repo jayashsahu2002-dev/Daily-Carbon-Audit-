@@ -44,6 +44,8 @@ HKD = '"HK$"#,##0'
 HKD2 = '"HK$"#,##0.00'
 
 wb = Workbook()
+wb.properties.creator = AUDIT["auditor"]
+wb.properties.title = "Home Energy Audit [2] - calculation workbook"
 NAMES = {}
 
 
@@ -1105,10 +1107,11 @@ for k in range(len(emos)):
 widths(ws, {"A": 46, "B": 16, "C": 16, "D": 16, "E": 16, "F": 14, "G": 10, "H": 12})
 
 # ======================================================================================
-# EE-EAes FORM ENTRIES (what fill_eeaes_form.py writes into the official macro-enabled form)
+# EE-EAes FORM ENTRIES (what fill_eeaes_form.py writes into the official macro-enabled form; tick-boxes are
+# given by their linked cell, or as 'Tick-box' for the three Part 1 boxes that have no linked cell)
 ws = wb.create_sheet("EE-EAes_Form_Entries")
-title(ws, "EE-EAes (V.2) form entries - values written into the official EMSD form",
-      "fill_eeaes_form.py copies these values into 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls (macros kept; open it in Excel with macros enabled). "
+title(ws, "EE-EAes (V.2) form entries",
+      "Entries made in 2_EE-EAes2018 (V.0)_SEE6115-8115_COMPLETED.xls (open it in Excel with macros enabled to see the form). "
       "Only sections relevant to a household are completed; CBSI and lift & escalator items are marked N/A as the form instructs.")
 header(ws, 4, ["Form sheet", "Cell / control", "Field on the form", "Value entered", "Entry type", "Relevance / note"], height=30)
 G = []
@@ -1122,7 +1125,7 @@ g("Part 1(A)", "H19", "2) Date of completion of energy audit", AUDIT["audit_end"
 g("Part 1(A)", "G21", "3) Energy Audit Form issued on", "N/A", "text", "Voluntary audit - no form issued under Cap. 610")
 g("Part 1(A)", "J21", "3) Energy Audit Form expired on", "N/A", "text", "As above")
 g("Part 1(A)", "H23", "4) Energy Audit Report reference no.", "SEE8115-HEA-2026-01", "text")
-g("Part 1(A)", "obj:124", "5) Import / export energy from/to other building?", "Tick 'No'", "tick", "Room supplied from the hall's CLP supply")
+g("Part 1(A)", "Tick-box", "5) Import / export energy from/to other building?", "Tick 'No'", "tick", "Room supplied from the hall's CLP supply")
 for c in ("E27", "H27", "J27"):
     g("Part 1(A)", c, "5) Building(s) importing / exporting energy", "N/A", "text", "Answer to item 5 is No")
 g("Part 1(B)(I)", "-", "1)(a) Type of building", "Not ticked", "none", "Only commercial types are offered; the audited unit is residential (student hostel)")
@@ -1130,9 +1133,9 @@ g("Part 1(B)(I)", "H7", "1)(b) Portion of the building entity being common area 
 g("Part 1(B)(I)", "H8", "1)(c) No. of blocks of the building entity", 1, "number", "", "0")
 g("Part 1(B)(I)", "H9", "2) Total internal floor area (m2)", "=ROOM_AREA", "number", "Room 1003B", "0.0")
 g("Part 1(B)(I)", "H10", "3) No. of floors of the building entity", 1, "number", "Audited unit is on 10/F", "0")
-g("Part 1(B)(I)", "obj:35", "4) Major type of building facade", "Tick 'Non-curtain wall'", "tick", "MiC concrete modules with aluminium windows")
+g("Part 1(B)(I)", "Tick-box", "4) Major type of building facade", "Tick 'Non-curtain wall'", "tick", "MiC concrete modules with aluminium windows")
 g("Part 1(B)(I)", "H12", "5) Date of issue of occupation approval", "Q3 2024 (residence opened; occupation-approval date not published)", "text")
-g("Part 1(B)(I)", "obj:12", "6) Type of central air-conditioning provided", "Tick 'Not applicable'", "tick", "Unitary window AC (room) and split AC (kitchen) only")
+g("Part 1(B)(I)", "Tick-box", "6) Type of central air-conditioning provided", "Tick 'Not applicable'", "tick", "Unitary window AC (room) and split AC (kitchen) only")
 for rr in range(18, 24):
     g("Part 1(B)(I)", f"H{rr}", f"7) Average weekly operating hours - row {rr}", "N/A", "text", NA_CBSI)
     if rr != 22:
@@ -1163,17 +1166,17 @@ for k, ref in enumerate(FORM_EMOS):
     er = first_emo + emo_index[ref]
     _, cat, typ = emos[emo_index[ref]][:3]
     fr = 9 + 2 * k
-    g("Part 3", f"A{fr}", f"EMO slot {chr(65 + k)} - reference", ref, "text")
-    g("Part 3", f"link:{CAT_COL[cat]}{fr}", f"EMO slot {chr(65 + k)} - category", f"Tick Category {cat}", "tick")
-    g("Part 3", f"link:{TYPE_COL[typ]}{fr}", f"EMO slot {chr(65 + k)} - type", f"Tick {typ}", "tick")
+    g("Part 3", f"A{fr}", f"EMO {chr(65 + k)} - reference", ref, "text")
+    g("Part 3", f"{CAT_COL[cat]}{fr}", f"EMO {chr(65 + k)} - category", f"Tick Category {cat}", "tick")
+    g("Part 3", f"{TYPE_COL[typ]}{fr}", f"EMO {chr(65 + k)} - type", f"Tick {typ}", "tick")
     tail = " Other EMOs (03, 07, 09, 13, 15, 16, 17, 19, 20) are in the report's EMO register (21 EMOs)." if k == len(FORM_EMOS) - 1 else ""
     desc = (f'=IF(EMO_Register!G{er}=0,EMO_Register!E{er}&". Viability statement only (EAC 7.4.4(d)); no saving claimed.",'
             f'EMO_Register!E{er}&". Saves "&TEXT(EMO_Register!G{er},"#,##0")&" kWh/yr"'
             f'&IF(ROUND(EMO_Register!G{er}-EMO_Register!H{er},1)<>0," (household share "&TEXT(EMO_Register!H{er},"#,##0")&")","")'
             f'&", HK$"&TEXT(EMO_Register!R{er},"#,##0")&"/yr, "&TEXT(EMO_Register!M{er},"#,##0")&" kg CO2e/yr; cost HK$"&TEXT(EMO_Register!J{er},"#,##0")'
-            f'&"; payback "&IF(EMO_Register!J{er}=0,"immediate",TEXT(EMO_Register!K{er},"0.0")&" yr; NPV HK$"&TEXT(EMO_Register!S{er},"#,##0"))&".")'
+            f'&"; payback "&IF(EMO_Register!J{er}=0,"immediate",TEXT(EMO_Register!K{er},"0.0")&" yr; NPV "&IF(EMO_Register!S{er}<0,"-","")&"HK$"&TEXT(ABS(EMO_Register!S{er}),"#,##0"))&".")'
             f'&"{tail}"')
-    g("Part 3", f"H{fr}", f"EMO slot {chr(65 + k)} - description", desc, "text")
+    g("Part 3", f"H{fr}", f"EMO {chr(65 + k)} - description", desc, "text")
 for k, (sheet, cellref, field, val, kind, note, nf) in enumerate(G):
     rr = 5 + k
     put(ws, f"A{rr}", sheet, "text")
@@ -1262,7 +1265,7 @@ put(ws, "B8", "Blue text = input", "in")
 put(ws, "C8", "Yellow fill = assumption", "assume")
 put(ws, "D8", "Black = formula", "calc")
 put(ws, "E8", "Green = link to another sheet", "link")
-section(ws, 10, "Key results (all live formulas)", 1, 6)
+section(ws, 10, "Key results", 1, 6)
 header(ws, 11, ["Indicator", "Value", "Unit", "Where calculated"])
 keys = [
     ("Room AC energy (baseline, Octopus spend)", "=AC_KWH", "kWh/yr", "AC_Baseline", KWH0),
